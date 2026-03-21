@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Zaryn — Admin Console</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080807;--s1:#111110;--s2:#181816;--s3:#1F1F1C;
+  --b1:#222220;--b2:#2C2C29;--b3:#383835;
+  --tx:#EEEAE0;--mu:#6B6A60;--mu2:#4A4A44;
+  --am:#C9A84C;--am2:#C9A84C15;--am3:#C9A84C35;
+  --gn:#52B07A;--gn2:#52B07A15;--gn3:#52B07A35;
+  --rd:#C0524B;--rd2:#C0524B15;--rd3:#C0524B35;
+  --bl:#5B8FD4;--bl2:#5B8FD415;--bl3:#5B8FD435;
+  --pu:#9B72CF;--pu2:#9B72CF15;--pu3:#9B72CF35;
+  --mono:'JetBrains Mono',monospace;--sans:'Outfit',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);font-weight:300;font-size:14px;}
+
+/* LOGIN */
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;}
+.lbox{width:340px;padding:2.5rem;background:var(--s1);border:1px solid var(--b2);border-radius:12px;}
+.llogo{font-family:var(--mono);font-size:28px;color:var(--am);letter-spacing:3px;margin-bottom:4px;}
+.lsub{font-size:11px;color:var(--mu);font-family:var(--mono);margin-bottom:2rem;}
+.lbox label{display:block;font-size:10px;color:var(--mu);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;}
+.lbox input{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:6px;padding:10px 14px;color:var(--tx);font-family:var(--mono);font-size:14px;outline:none;transition:border-color .2s;}
+.lbox input:focus{border-color:var(--am);}
+.lbtn{width:100%;margin-top:1.25rem;padding:11px;background:var(--am);color:#0F0E0B;font-family:var(--mono);font-size:13px;font-weight:500;border:none;border-radius:6px;cursor:pointer;transition:opacity .2s;}
+.lbtn:hover{opacity:.85;}
+.lerr{font-size:12px;color:var(--rd);font-family:var(--mono);margin-top:10px;display:none;}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--b1);position:sticky;top:0;background:var(--bg);z-index:10;flex-wrap:wrap;gap:10px;}
+.hdr-logo{font-family:var(--mono);font-size:16px;color:var(--am);letter-spacing:2px;}
+.hdr-stats{display:flex;gap:16px;flex-wrap:wrap;}
+.hs{text-align:center;}
+.hs-v{font-family:var(--mono);font-size:16px;font-weight:500;}
+.hs-l{font-family:var(--mono);font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;}
+.runway-pill{font-family:var(--mono);font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--b2);color:var(--mu);}
+.runway-ok{color:var(--gn);border-color:var(--gn);}
+.runway-warn{color:var(--am);border-color:var(--am);}
+.runway-low{color:var(--rd);border-color:var(--rd);}
+.hdr-r{display:flex;align-items:center;gap:10px;}
+.out-btn{font-family:var(--mono);font-size:11px;color:var(--mu);background:none;border:1px solid var(--b2);padding:4px 12px;border-radius:6px;cursor:pointer;}
+.out-btn:hover{color:var(--tx);}
+
+/* TABS */
+.tabs{display:flex;gap:2px;padding:12px 20px 0;border-bottom:1px solid var(--b1);overflow-x:auto;}
+.tab{font-family:var(--mono);font-size:11px;padding:7px 14px;border-radius:6px 6px 0 0;cursor:pointer;color:var(--mu);border:1px solid transparent;border-bottom:none;transition:all .2s;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.tab:hover{color:var(--tx);}
+.tab.active{color:var(--am);border-color:var(--b2);background:var(--s1);border-bottom:1px solid var(--s1);margin-bottom:-1px;}
+.badge{background:var(--am);color:#000;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:500;}
+
+/* CONTENT */
+.content{flex:1;padding:20px;max-width:960px;width:100%;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+.slbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--b1);}
+
+/* FORM */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.field label{display:block;font-family:var(--mono);font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{background:var(--s1);border:1px solid var(--b2);border-radius:6px;padding:9px 12px;color:var(--tx);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--am);}
+textarea{resize:vertical;min-height:70px;font-family:var(--sans);font-size:14px;line-height:1.6;}
+select option{background:var(--s2);}
+
+/* OPTION COUNT */
+.cnt-row{display:flex;gap:8px;margin-bottom:14px;}
+.cnt-btn{flex:1;padding:9px;border-radius:6px;border:1px solid var(--b2);background:var(--s1);color:var(--mu);font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .2s;text-align:center;}
+.cnt-btn:hover{color:var(--tx);}
+.cnt-btn.active{background:var(--am2);border-color:var(--am);color:var(--am);}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:6px;font-family:var(--mono);font-size:12px;cursor:pointer;border:1px solid var(--b2);background:var(--s1);color:var(--tx);transition:all .2s;white-space:nowrap;}
+.btn:hover{background:var(--s2);}
+.btn-am{background:var(--am);color:#0F0E0B;border-color:var(--am);}
+.btn-am:hover{opacity:.85;}
+.btn-gn{color:var(--gn);border-color:var(--gn2);}
+.btn-gn:hover{background:var(--gn2);}
+.btn-rd{color:var(--rd);border-color:var(--rd2);}
+.btn-rd:hover{background:var(--rd2);}
+.btn-bl{color:var(--bl);border-color:var(--bl2);}
+.btn-bl:hover{background:var(--bl2);}
+.btn-pu{color:var(--pu);border-color:var(--pu2);}
+.btn-pu:hover{background:var(--pu2);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.gen-btn{width:100%;padding:13px;font-size:14px;margin-bottom:18px;}
+
+/* CALLOUT */
+.callout{display:flex;gap:10px;padding:12px 14px;border-radius:8px;margin:12px 0;font-size:13px;line-height:1.65;}
+.c-gn{background:var(--gn2);border:1px solid var(--gn3);}
+.c-am{background:var(--am2);border:1px solid var(--am3);}
+.c-rd{background:var(--rd2);border:1px solid var(--rd3);}
+.c-bl{background:var(--bl2);border:1px solid var(--bl3);}
+
+/* SCENARIO CARD */
+.sc-card{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:18px;margin-bottom:14px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.sc-tag{display:inline-block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px;background:var(--am2);color:var(--am);margin-bottom:12px;}
+.sc-cnt{display:inline-block;font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bl2);color:var(--bl);margin-bottom:12px;margin-left:6px;}
+.sc-text{font-size:14px;line-height:1.7;color:var(--tx);margin-bottom:14px;}
+.sc-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.sc-opt{padding:10px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:6px;font-size:13px;display:flex;gap:10px;}
+.sc-opt-l{font-family:var(--mono);font-size:10px;color:var(--am);min-width:16px;margin-top:1px;}
+
+/* OPT EDITOR */
+.opt-editor{background:var(--bg);border:1px solid var(--b1);border-radius:7px;padding:14px;margin-bottom:12px;}
+.oe-title{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:10px;}
+.oe-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.oe-ltr{font-family:var(--mono);font-size:12px;color:var(--am);min-width:18px;}
+.oe-inp{flex:1;padding:8px 12px;background:var(--s1);border:1px solid var(--b2);border-radius:5px;color:var(--tx);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s;}
+.oe-inp:focus{border-color:var(--am);}
+.oe-rem{padding:4px 8px;border:none;background:none;color:var(--mu2);font-family:var(--mono);font-size:11px;cursor:pointer;}
+.oe-rem:hover{color:var(--rd);}
+.add-opt-btn{width:100%;padding:8px;border:1px dashed var(--b2);border-radius:5px;background:none;color:var(--mu);font-family:var(--mono);font-size:11px;cursor:pointer;margin-top:4px;}
+.add-opt-btn:hover{border-color:var(--am);color:var(--am);}
+
+/* QUALITY */
+.q-box{background:var(--bg);border:1px solid var(--b1);border-radius:7px;padding:13px;margin-bottom:12px;}
+.q-hdr{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:9px;}
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;}
+.q-item{display:flex;align-items:flex-start;gap:7px;}
+.q-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.qp{background:var(--gn);}
+.qf{background:var(--rd);}
+.q-name{font-family:var(--mono);font-size:11px;color:var(--mu);}
+.q-note{font-size:11px;color:var(--tx);opacity:.7;}
+.q-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:9px;border-top:1px solid var(--b1);font-family:var(--mono);font-size:12px;}
+.vp{color:var(--gn);}
+.vw{color:var(--am);}
+.vf{color:var(--rd);}
+
+/* ACTION ROW */
+.action-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* BANK */
+.bank-bar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.bank-bar input{max-width:220px;}
+.empty-state{text-align:center;padding:3rem;color:var(--mu);font-family:var(--mono);font-size:13px;border:1px dashed var(--b2);border-radius:10px;}
+.bk-item{background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:14px;margin-bottom:9px;}
+.bk-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-wrap:wrap;gap:7px;}
+.bk-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.bk-acts{display:flex;gap:7px;}
+.bk-text{font-size:13px;line-height:1.6;color:var(--tx);margin-bottom:9px;}
+.bk-opts{display:flex;flex-direction:column;gap:5px;}
+.bk-opt{font-size:11px;padding:5px 9px;background:var(--s2);border-radius:4px;color:var(--mu);font-family:var(--mono);}
+.bk-opt em{color:var(--tx);font-style:normal;}
+.sb{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;}
+.sb-hi{background:var(--gn2);color:var(--gn);}
+.sb-md{background:var(--am2);color:var(--am);}
+.sb-lo{background:var(--rd2);color:var(--rd);}
+.cnt-badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bl2);color:var(--bl);}
+.cat-badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--pu2);color:var(--pu);}
+.live-pill{font-family:var(--mono);font-size:10px;color:var(--gn);border:1px solid var(--gn);padding:2px 7px;border-radius:4px;}
+.sched-pill{font-family:var(--mono);font-size:10px;color:var(--bl);border:1px solid var(--bl2);padding:2px 7px;border-radius:4px;}
+
+/* DAILY SLOTS */
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.slot-card{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:16px;}
+.slot-card.has-scenario{border-color:var(--am3);}
+.slot-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.slot-num{font-family:var(--mono);font-size:12px;color:var(--am);background:var(--am2);border:1px solid var(--am3);padding:3px 10px;border-radius:4px;}
+.slot-scenario-text{font-size:12px;line-height:1.5;color:var(--mu);margin-bottom:10px;min-height:40px;}
+.slot-scenario-text.set{color:var(--tx);}
+.slot-select{margin-bottom:10px;}
+.anchor-box{background:var(--bg);border:1px solid var(--b1);border-radius:6px;padding:10px;margin-top:10px;}
+.anchor-title{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.anchor-inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.anchor-field{display:flex;align-items:center;gap:6px;}
+.anchor-lbl{font-family:var(--mono);font-size:10px;color:var(--am);min-width:14px;}
+.anchor-inp{background:var(--s1);border:1px solid var(--b2);border-radius:4px;padding:5px 8px;font-family:var(--mono);font-size:12px;color:var(--tx);width:100%;outline:none;}
+.anchor-inp:focus{border-color:var(--am);}
+.vote-stats{margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);}
+.vote-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--mu);margin-bottom:3px;}
+.vote-row strong{color:var(--tx);}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--b3);border-radius:20px;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--am);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);}
+.toggle-lbl{font-family:var(--mono);font-size:10px;color:var(--mu);}
+
+/* SCHEDULE */
+.sched-controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;}
+.sched-list-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b1);}
+.sched-list-item:last-child{border-bottom:none;}
+.sched-date{font-family:var(--mono);font-size:12px;color:var(--am);min-width:80px;}
+.sched-slot{font-family:var(--mono);font-size:10px;color:var(--mu);min-width:40px;}
+.sched-text{font-size:12px;color:var(--tx);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* BULK GEN */
+.bulk-progress{margin-bottom:16px;}
+.bulk-item{background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:14px;margin-bottom:10px;animation:fadeIn .3s ease;}
+.bulk-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.bulk-item-text{font-size:13px;line-height:1.6;color:var(--mu);margin-bottom:8px;}
+.bulk-item-text.loaded{color:var(--tx);}
+.bulk-actions{display:flex;gap:7px;}
+.gen-status{font-family:var(--mono);font-size:11px;color:var(--mu);}
+
+/* SUBMISSIONS */
+.sub-item{background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:14px;margin-bottom:10px;animation:fadeIn .3s ease;}
+.sub-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-wrap:wrap;gap:7px;}
+.sub-st{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:4px;}
+.st-pend{background:var(--am2);color:var(--am);}
+.st-proc{background:var(--gn2);color:var(--gn);}
+.st-rej{background:var(--rd2);color:var(--rd);}
+.sub-body{font-size:13px;line-height:1.65;color:var(--tx);margin-bottom:9px;}
+.sub-dt{font-family:var(--mono);font-size:10px;color:var(--mu);}
+.proc-card{background:var(--bg);border:1px solid var(--b1);border-radius:6px;padding:12px;margin-top:9px;}
+.proc-lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:7px;}
+
+/* RUNWAY */
+.runway-card{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:20px;margin-bottom:16px;}
+.runway-gauge{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin:12px 0;}
+.runway-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.rw-gn{background:var(--gn);}
+.rw-am{background:var(--am);}
+.rw-rd{background:var(--rd);}
+.runway-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+.rw-stat{text-align:center;background:var(--s2);border-radius:6px;padding:12px;}
+.rw-stat-val{font-family:var(--mono);font-size:20px;font-weight:500;}
+.rw-stat-lbl{font-size:11px;color:var(--mu);margin-top:2px;}
+
+/* SETTINGS */
+.settings-section{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:18px;margin-bottom:14px;}
+.settings-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--am);margin-bottom:14px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;}
+.setting-lbl{font-size:13px;color:var(--tx);flex:1;}
+.setting-desc{font-size:11px;color:var(--mu);margin-top:2px;}
+.setting-ctrl{min-width:120px;}
+
+/* LOADING */
+.loading{text-align:center;padding:1.5rem;color:var(--mu);font-family:var(--mono);font-size:13px;}
+.da::after{content:'...';animation:dots 1.5s infinite;}
+@keyframes dots{0%,100%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:10px 16px;font-family:var(--mono);font-size:12px;z-index:999;animation:slideUp .3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.toast.ok{border-color:var(--gn);color:var(--gn);}
+.toast.err{border-color:var(--rd);color:var(--rd);}
+
+@media(max-width:640px){
+  .g2,.g3,.slots-grid{grid-template-columns:1fr;}
+  .q-grid{grid-template-columns:1fr;}
+  .hdr-stats{gap:12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lbox">
+    <div class="llogo">Zaryn</div>
+    <div class="lsub">// admin console v3</div>
+    <label>Password</label>
+    <input type="password" id="pwd" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="lbtn" onclick="doLogin()">Access Console</button>
+    <div class="lerr" id="lerr">Incorrect password.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-logo">ZARYN</div>
+    <div class="hdr-stats">
+      <div class="hs"><div class="hs-v" id="st-bank">—</div><div class="hs-l">Banked</div></div>
+      <div class="hs"><div class="hs-v" id="st-sched">—</div><div class="hs-l">Scheduled</div></div>
+      <div class="hs"><div class="hs-v" id="st-sub">—</div><div class="hs-l">Submissions</div></div>
+    </div>
+    <div class="hdr-r">
+      <div class="runway-pill" id="runway-pill">● Loading...</div>
+      <button class="out-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('generate',this)">Generate</div>
+    <div class="tab" onclick="switchTab('bulk',this)">Bulk Generate</div>
+    <div class="tab" onclick="switchTab('bank',this)">Bank</div>
+    <div class="tab" onclick="switchTab('daily',this)">Daily Slots</div>
+    <div class="tab" onclick="switchTab('schedule',this)">Schedule</div>
+    <div class="tab" id="sub-tab" onclick="switchTab('submissions',this)">Submissions</div>
+    <div class="tab" onclick="switchTab('runway',this)">Runway</div>
+    <div class="tab" onclick="switchTab('settings',this)">Settings</div>
+  </div>
+
+  <div class="content">
+
+    <!-- GENERATE -->
+    <div class="panel active" id="panel-generate">
+      <div class="slbl">Option Count</div>
+      <div class="cnt-row">
+        <button class="cnt-btn active" id="cnt-2" onclick="setCount(2)">2 Options<br><small style="font-size:10px;opacity:.6">Binary</small></button>
+        <button class="cnt-btn" id="cnt-3" onclick="setCount(3)">3 Options<br><small style="font-size:10px;opacity:.6">+ Gray</small></button>
+        <button class="cnt-btn" id="cnt-4" onclick="setCount(4)">4 Options<br><small style="font-size:10px;opacity:.6">+ Two behaviors</small></button>
+      </div>
+      <div class="slbl" style="margin-top:18px">Settings</div>
+      <div class="g2">
+        <div class="field"><label>Category</label>
+          <select id="sel-cat"><option value="random">Random</option><option value="regret">Regret vs Comfort</option><option value="social_cost">Social Cost vs Personal Truth</option><option value="fairness_loyalty">Fairness vs Loyalty</option><option value="dignity_practical">Dignity vs Practicality</option><option value="stated_vs_actual">Stated Values vs Actual Behavior</option><option value="avoidance">Avoidance vs Confrontation</option><option value="sunk_cost">Sunk Cost vs Fresh Start</option><option value="collective_personal">Personal Cost vs Group Benefit</option></select>
+        </div>
+        <div class="field"><label>Setting</label>
+          <select id="sel-tone"><option value="everyday">Everyday life</option><option value="workplace">Workplace</option><option value="family">Family</option><option value="friendship">Friendship</option><option value="strangers">Strangers</option></select>
+        </div>
+      </div>
+      <button class="btn btn-am gen-btn" id="gen-btn" onclick="generateSingle()">Generate Scenario →</button>
+      <div id="gen-out"></div>
+    </div>
+
+    <!-- BULK GENERATE -->
+    <div class="panel" id="panel-bulk">
+      <div class="slbl">Bulk Generator — generate multiple scenarios at once</div>
+      <div class="callout c-am">💡 Generate a batch, review each one, bank the good ones. Rejected ones are automatically discarded.</div>
+      <div class="g3" style="margin-top:14px">
+        <div class="field"><label>Category</label>
+          <select id="bulk-cat"><option value="random">Random mix</option><option value="regret">Regret vs Comfort</option><option value="social_cost">Social Cost vs Personal Truth</option><option value="fairness_loyalty">Fairness vs Loyalty</option><option value="dignity_practical">Dignity vs Practicality</option><option value="stated_vs_actual">Stated Values vs Actual Behavior</option><option value="avoidance">Avoidance vs Confrontation</option><option value="sunk_cost">Sunk Cost vs Fresh Start</option><option value="collective_personal">Personal Cost vs Group Benefit</option></select>
+        </div>
+        <div class="field"><label>How many to generate</label>
+          <select id="bulk-count"><option value="3">3 scenarios</option><option value="6">6 scenarios</option><option value="9" selected>9 scenarios</option><option value="12">12 scenarios</option></select>
+        </div>
+        <div class="field"><label>Options per scenario</label>
+          <select id="bulk-opts"><option value="2">2 options</option><option value="3">3 options</option><option value="random">Random mix</option></select>
+        </div>
+      </div>
+      <button class="btn btn-am gen-btn" id="bulk-btn" onclick="startBulk()">Generate Batch →</button>
+      <div id="bulk-progress-info" style="margin-bottom:14px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--mu)" id="bulk-status">Generating...</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--am)" id="bulk-counter">0/9</span>
+        </div>
+        <div style="height:3px;background:var(--s3);border-radius:2px;overflow:hidden">
+          <div style="height:100%;background:var(--am);border-radius:2px;transition:width .3s" id="bulk-prog-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="bulk-out"></div>
+    </div>
+
+    <!-- BANK -->
+    <div class="panel" id="panel-bank">
+      <div class="slbl">Scenario Bank</div>
+      <div class="bank-bar">
+        <input type="text" placeholder="Search…" oninput="filterBank(this.value)" style="max-width:200px">
+        <select id="bank-filter-cat" onchange="filterBank()" style="max-width:160px"><option value="">All categories</option></select>
+        <button class="btn" onclick="exportBank()">Export JSON</button>
+        <button class="btn btn-rd" onclick="clearBank()">Clear All</button>
+      </div>
+      <div id="bank-list"><div class="loading"><span class="da">Loading bank</span></div></div>
+    </div>
+
+    <!-- DAILY SLOTS -->
+    <div class="panel" id="panel-daily">
+      <div class="slbl">Daily Slots — set 3 scenarios per day</div>
+      <div class="field" style="max-width:200px;margin-bottom:18px">
+        <label>Date</label>
+        <input type="date" id="daily-date" onchange="loadDailySlots()">
+      </div>
+      <div class="slots-grid" id="slots-grid">
+        <div class="loading"><span class="da">Loading slots</span></div>
+      </div>
+      <button class="btn btn-am" onclick="saveDailySlots()" style="margin-top:4px">Save All Slots →</button>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="panel" id="panel-schedule">
+      <div class="slbl">Upcoming Schedule</div>
+      <div class="sched-controls">
+        <div class="field" style="min-width:140px"><label>From date</label><input type="date" id="sched-from" onchange="loadSchedule()"></div>
+        <button class="btn btn-am" onclick="loadSchedule()">Refresh</button>
+      </div>
+      <div id="sched-list"><div class="loading"><span class="da">Loading schedule</span></div></div>
+    </div>
+
+    <!-- SUBMISSIONS -->
+    <div class="panel" id="panel-submissions">
+      <div class="slbl">User Submissions</div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-family:var(--mono);font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Process with how many options?</label>
+        <div class="cnt-row" style="max-width:340px">
+          <button class="cnt-btn active" id="sub-cnt-2" onclick="setSubCount(2)">2 Options</button>
+          <button class="cnt-btn" id="sub-cnt-3" onclick="setSubCount(3)">3 Options</button>
+          <button class="cnt-btn" id="sub-cnt-4" onclick="setSubCount(4)">4 Options</button>
+        </div>
+      </div>
+      <div id="sub-list"><div class="loading"><span class="da">Loading submissions</span></div></div>
+    </div>
+
+    <!-- RUNWAY -->
+    <div class="panel" id="panel-runway">
+      <div class="slbl">Content Runway</div>
+      <div class="runway-card">
+        <div class="runway-stats">
+          <div class="rw-stat"><div class="rw-stat-val" id="rw-total">—</div><div class="rw-stat-lbl">Total in bank</div></div>
+          <div class="rw-stat"><div class="rw-stat-val" id="rw-unscheduled">—</div><div class="rw-stat-lbl">Unscheduled</div></div>
+          <div class="rw-stat"><div class="rw-stat-val" id="rw-days">—</div><div class="rw-stat-lbl">Days of runway</div></div>
+        </div>
+        <div class="runway-gauge"><div class="runway-fill" id="rw-gauge" style="width:0%"></div></div>
+        <p style="font-size:13px;color:var(--mu);margin-bottom:14px" id="rw-desc">Calculating...</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-am" onclick="autoSchedule(7)">Auto-schedule 7 days →</button>
+          <button class="btn btn-bl" onclick="autoSchedule(14)">Auto-schedule 14 days →</button>
+          <button class="btn" onclick="autoSchedule(30)">Auto-schedule 30 days</button>
+        </div>
+      </div>
+      <div class="callout c-bl">ℹ Auto-schedule assigns unscheduled scenarios from your bank to upcoming empty slots. It will not overwrite slots that already have scenarios assigned.</div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="slbl">App Settings</div>
+      <div class="settings-section">
+        <div class="settings-title">Game Settings</div>
+        <div class="setting-row">
+          <div><div class="setting-lbl">Questions per day</div><div class="setting-desc">How many scenarios users see daily</div></div>
+          <div class="setting-ctrl">
+            <select id="set-qpd" style="width:100%"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-lbl">Vote reveal threshold</div><div class="setting-desc">Show % after this many real votes</div></div>
+          <div class="setting-ctrl"><input type="number" id="set-threshold" value="20" min="1" max="100"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Default Anchor Votes</div>
+        <div class="callout c-am" style="margin-bottom:14px">Anchor votes make new scenarios look active from day one. Real votes add on top. You always see both separately in the Daily Slots tab.</div>
+        <div class="g2">
+          <div class="field"><label>Default anchor A votes</label><input type="number" id="set-anchor-a" value="620" min="0"></div>
+          <div class="field"><label>Default anchor B votes</label><input type="number" id="set-anchor-b" value="480" min="0"></div>
+        </div>
+      </div>
+      <button class="btn btn-am" onclick="saveSettings()" style="width:100%;padding:13px">Save Settings →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const PASS = 'ZARYN2025';
+const API = (action, data) => fetch('/.netlify/functions/db', {
+  method: 'POST', headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({action, ...data})
+}).then(r => r.json());
+
+const GEN = (data) => fetch('/.netlify/functions/generate', {
+  method: 'POST', headers: {'Content-Type':'application/json'},
+  body: JSON.stringify(data)
+}).then(r => r.json());
+
+let bank = [];
+let selectedCount = 2, subCount = 2;
+let pendingScenario = null;
+let slotsData = {};
+
+// ── CATEGORY MAP ──
+const CATS = {
+  random: 'Random', regret: 'Regret vs Comfort', social_cost: 'Social Cost',
+  fairness_loyalty: 'Fairness vs Loyalty', dignity_practical: 'Dignity vs Practicality',
+  stated_vs_actual: 'Stated vs Actual', avoidance: 'Avoidance', sunk_cost: 'Sunk Cost',
+  collective_personal: 'Personal vs Group', workplace: 'Workplace', dating: 'Dating',
+  parenting: 'Parenting', money: 'Money', friendship: 'Friendship', health: 'Health'
+};
+
+// ── AUTH ──
+function doLogin() {
+  if (document.getElementById('pwd').value === PASS) {
+    sessionStorage.setItem('zaryn_auth','1');
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='flex';
+    init();
+  } else {
+    document.getElementById('lerr').style.display='block';
+    document.getElementById('pwd').value='';
+  }
+}
+function doLogout() {
+  sessionStorage.removeItem('zaryn_auth');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login').style.display='flex';
+  document.getElementById('pwd').value='';
+}
+window.onload = () => {
+  if (sessionStorage.getItem('zaryn_auth')==='1') {
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='flex';
+    init();
+  }
+};
+
+// ── INIT ──
+async function init() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('daily-date').value = today;
+  document.getElementById('sched-from').value = today;
+  await Promise.all([loadBank(), loadRunway(), loadSettings()]);
+  loadDailySlots();
+}
+
+// ── TABS ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+  if (id==='bank') renderBank();
+  if (id==='daily') loadDailySlots();
+  if (id==='schedule') loadSchedule();
+  if (id==='submissions') loadSubmissions();
+  if (id==='runway') loadRunway();
+  if (id==='settings') loadSettings();
+}
+
+// ── OPTION COUNT ──
+function setCount(n) {
+  selectedCount = n;
+  [2,3,4].forEach(i=>document.getElementById('cnt-'+i).classList.toggle('active',i===n));
+}
+function setSubCount(n) {
+  subCount = n;
+  [2,3,4].forEach(i=>document.getElementById('sub-cnt-'+i).classList.toggle('active',i===n));
+}
+
+// ── SINGLE GENERATE ──
+async function generateSingle() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('gen-out').innerHTML = '<div class="loading"><span class="da">Generating</span></div>';
+  const data = await GEN({ action:'generate', category:document.getElementById('sel-cat').value, tone:document.getElementById('sel-tone').value, optionCount:selectedCount });
+  if (data.error) {
+    document.getElementById('gen-out').innerHTML = `<div class="loading" style="color:var(--rd)">Error: ${data.error}</div>`;
+  } else {
+    pendingScenario = data;
+    renderGenCard(data, 'gen-out', () => bankSingle(data));
+  }
+  btn.disabled = false;
+}
+
+function bankSingle(data) {
+  saveToBank(data);
+  document.getElementById('gen-out').innerHTML = '<div class="loading" style="color:var(--gn)">✓ Banked. Generate another or view in Bank tab.</div>';
+  pendingScenario = null;
+}
+
+// ── RENDER GENERATED CARD ──
+function renderGenCard(s, containerId, onBank) {
+  const q = s.quality||{};
+  const checks = [{key:'psychological',label:'Psychological'},{key:'realCost',label:'Real cost'},{key:'splitTarget',label:'Split target'},{key:'universal',label:'Universal'},{key:'safe',label:'Safe'}];
+  const vc = s.score>=80?'vp':s.score>=60?'vw':'vf';
+  const opts = (s.options||[]).map(o=>`<div class="sc-opt"><span class="sc-opt-l">${o.letter}</span>${o.text}</div>`).join('');
+  const splitA = s.estimatedSplit?.A || 50;
+  const el = document.getElementById(containerId);
+  const cardId = 'card_'+Math.random().toString(36).substr(2,6);
+  el.innerHTML += `<div class="sc-card" id="${cardId}">
+    <span class="sc-tag">${s.category||'Scenario'}</span>
+    <span class="sc-cnt">${s.optionCount||selectedCount} options</span>
+    <div class="sc-text">${s.scenario}</div>
+    <div class="sc-opts">${opts}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--mu)">A</span>
+      <div style="flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--am);border-radius:2px;width:${splitA}%"></div></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--mu)">Est: ${splitA}/${100-splitA}</span>
+    </div>
+    <div class="q-box">
+      <div class="q-hdr">Quality</div>
+      <div class="q-grid">${checks.map(c=>`<div class="q-item"><div class="q-dot ${q[c.key]?.pass?'qp':'qf'}"></div><div><div class="q-name">${c.label}</div><div class="q-note">${q[c.key]?.note||''}</div></div></div>`).join('')}</div>
+      <div class="q-bottom"><span style="color:var(--mu)">${s.verdict}</span><span class="${vc}">${s.score}/100</span></div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-gn" onclick="(${onBank.toString()})()">Bank This</button>
+      <button class="btn btn-rd" onclick="document.getElementById('${cardId}').remove()">Discard</button>
+    </div>
+  </div>`;
+}
+
+// ── BULK GENERATE ──
+async function startBulk() {
+  const btn = document.getElementById('bulk-btn');
+  const count = parseInt(document.getElementById('bulk-count').value);
+  const cat = document.getElementById('bulk-cat').value;
+  const optCount = document.getElementById('bulk-opts').value;
+  btn.disabled = true;
+  document.getElementById('bulk-out').innerHTML = '';
+  document.getElementById('bulk-progress-info').style.display='block';
+  document.getElementById('bulk-prog-bar').style.width='0%';
+
+  for (let i=0; i<count; i++) {
+    document.getElementById('bulk-status').textContent = `Generating ${i+1} of ${count}...`;
+    document.getElementById('bulk-counter').textContent = `${i}/${count}`;
+    document.getElementById('bulk-prog-bar').style.width = Math.round(i/count*100)+'%';
+
+    const oc = optCount==='random' ? (Math.random()<.5?2:3) : parseInt(optCount);
+    const useCat = cat==='random' ? Object.keys(CATS).filter(k=>k!=='random')[Math.floor(Math.random()*8)] : cat;
+
+    try {
+      const data = await GEN({ action:'generate', category:useCat, tone:'everyday', optionCount:oc });
+      if (!data.error) {
+        appendBulkCard(data);
+      }
+    } catch(e) {}
+    await new Promise(r=>setTimeout(r,500));
+  }
+
+  document.getElementById('bulk-status').textContent = `Done — review and bank the ones you like`;
+  document.getElementById('bulk-counter').textContent = `${count}/${count}`;
+  document.getElementById('bulk-prog-bar').style.width = '100%';
+  btn.disabled = false;
+}
+
+function appendBulkCard(s) {
+  const out = document.getElementById('bulk-out');
+  const cardId = 'bulk_'+Math.random().toString(36).substr(2,6);
+  const q = s.quality||{};
+  const vc = s.score>=80?'vp':s.score>=60?'vw':'vf';
+  const opts = (s.options||[]).map(o=>`<div class="sc-opt"><span class="sc-opt-l">${o.letter}</span>${o.text}</div>`).join('');
+  const div = document.createElement('div');
+  div.className = 'bulk-item';
+  div.id = cardId;
+  div.innerHTML = `
+    <div class="bulk-item-header">
+      <div><span class="sc-tag">${s.category||'Scenario'}</span><span class="sc-cnt">${s.optionCount||2} options</span></div>
+      <span class="${vc}" style="font-family:var(--mono);font-size:12px">${s.score}/100 · ${s.verdict}</span>
+    </div>
+    <div class="bulk-item-text loaded">${s.scenario}</div>
+    <div class="sc-opts" style="margin-bottom:10px">${opts}</div>
+    <div class="bulk-actions">
+      <button class="btn btn-gn" style="font-size:11px;padding:6px 12px" onclick="bankBulk('${cardId}',this)">Bank This ✓</button>
+      <button class="btn btn-rd" style="font-size:11px;padding:6px 12px" onclick="document.getElementById('${cardId}').remove()">Discard</button>
+    </div>`;
+  out.appendChild(div);
+  div._scenario = s;
+}
+
+function bankBulk(cardId, btn) {
+  const el = document.getElementById(cardId);
+  if (!el?._scenario) return;
+  saveToBank(el._scenario);
+  btn.textContent = '✓ Banked';
+  btn.disabled = true;
+  btn.className = 'btn btn-gn';
+}
+
+// ── BANK OPERATIONS ──
+async function loadBank() {
+  const res = await API('get_bank');
+  bank = res.scenarios || [];
+  updateStats();
+  renderBank();
+  populateBankFilter();
+}
+
+async function saveToBank(s) {
+  if (!s.id) s.id = Math.random().toString(36).substr(2,8);
+  s.bankedAt = new Date().toISOString();
+  const catKey = document.getElementById('sel-cat')?.value || document.getElementById('bulk-cat')?.value || 'general';
+  s.categoryKey = catKey === 'random' ? 'general' : catKey;
+  await API('save_scenario', { scenario: s });
+  bank.unshift(s);
+  updateStats();
+  toast('Banked ✓','ok');
+}
+
+function renderBank(filter='', catFilter='') {
+  const el = document.getElementById('bank-list');
+  if (!bank.length) { el.innerHTML='<div class="empty-state">No scenarios banked yet. Generate some first.</div>'; return; }
+  const cf = catFilter || document.getElementById('bank-filter-cat')?.value || '';
+  let list = [...bank];
+  if (filter) list = list.filter(s=>s.scenario?.toLowerCase().includes(filter.toLowerCase())||s.category?.toLowerCase().includes(filter.toLowerCase()));
+  if (cf) list = list.filter(s=>s.category_key===cf||s.categoryKey===cf);
+  if (!list.length) { el.innerHTML='<div class="empty-state">No results.</div>'; return; }
+  el.innerHTML = list.map(s=>{
+    const sc = s.score>=80?'sb-hi':s.score>=60?'sb-md':'sb-lo';
+    const cnt = s.option_count || s.optionCount || s.options?.length || 2;
+    const opts = (s.options||[]).map(o=>`<div class="bk-opt"><span style="font-family:var(--mono);font-size:10px;color:var(--am);margin-right:6px">${o.letter}</span><em>${o.text}</em></div>`).join('');
+    return `<div class="bk-item">
+      <div class="bk-hdr">
+        <div class="bk-meta">
+          <span class="sc-tag" style="margin:0">${s.category||'General'}</span>
+          <span class="cnt-badge">${cnt} opts</span>
+          <span class="sb ${sc}">${s.score||'?'}/100</span>
+        </div>
+        <div class="bk-acts">
+          <button class="btn btn-rd" style="padding:5px 10px;font-size:11px" onclick="deleteScenario('${s.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="bk-text">${s.scenario}</div>
+      <div class="bk-opts">${opts}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterBank(val) { renderBank(val||''); }
+
+function populateBankFilter() {
+  const sel = document.getElementById('bank-filter-cat');
+  if (!sel) return;
+  const cats = [...new Set(bank.map(s=>s.category).filter(Boolean))];
+  sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+async function deleteScenario(id) {
+  if (!confirm('Delete this scenario?')) return;
+  await API('delete_scenario', { id });
+  bank = bank.filter(s=>s.id!==id);
+  updateStats(); renderBank(); loadRunway();
+  toast('Deleted','');
+}
+
+function exportBank() {
+  const blob = new Blob([JSON.stringify(bank,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='zaryn-bank.json'; a.click();
+  toast('Exported ✓','ok');
+}
+
+async function clearBank() {
+  if (!confirm('Delete ALL banked scenarios? This cannot be undone.')) return;
+  for (const s of bank) await API('delete_scenario',{id:s.id});
+  bank=[]; updateStats(); renderBank(); loadRunway();
+  toast('Bank cleared','');
+}
+
+// ── DAILY SLOTS ──
+async function loadDailySlots() {
+  const date = document.getElementById('daily-date').value;
+  const grid = document.getElementById('slots-grid');
+  grid.innerHTML = '<div class="loading"><span class="da">Loading</span></div>';
+  const res = await API('get_daily', { date });
+  const slots = res.slots || [];
+  // Ensure we have 3 slot objects
+  const slotMap = {};
+  for (const s of slots) slotMap[s.slot_number] = s;
+  slotsData = {};
+  grid.innerHTML = [1,2,3].map(n => {
+    const slot = slotMap[n] || { slot_number:n, slot_date:date, scenario:null, anchor_a:620, anchor_b:480, anchor_c:0, anchor_d:0, anchor_enabled:true };
+    slotsData[n] = { ...slot };
+    const scenario = slot.scenario;
+    const vd = slot.voteData;
+    const scenarioOpts = `<option value="">— none —</option>` + bank.map(s=>`<option value="${s.id}" ${s.id===slot.scenario_id?'selected':''}>${s.category||'—'}: ${s.scenario?.substring(0,45)}…</option>`).join('');
+    const realTotal = vd?.realTotal || 0;
+    const dispTotal = vd?.total || (slot.anchor_enabled?(slot.anchor_a||0)+(slot.anchor_b||0):0);
+    return `<div class="slot-card ${scenario?'has-scenario':''}" id="slot-${n}">
+      <div class="slot-header">
+        <span class="slot-num">Slot ${n}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--mu)">${dispTotal} total votes</span>
+      </div>
+      <div class="slot-scenario-text ${scenario?'set':''}">${scenario ? scenario.scenario?.substring(0,80)+'…' : 'No scenario set'}</div>
+      <div class="slot-select">
+        <select id="slot-sel-${n}" onchange="updateSlotScenario(${n})">${scenarioOpts}</select>
+      </div>
+      <div class="anchor-box">
+        <div class="anchor-title">
+          <span>Anchor Votes</span>
+          <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="anchor-en-${n}" ${slot.anchor_enabled!==false?'checked':''} onchange="toggleAnchor(${n})"><span class="toggle-slider"></span></label><span class="toggle-lbl">Enabled</span></label>
+        </div>
+        <div class="anchor-inputs">
+          <div class="anchor-field"><span class="anchor-lbl">A</span><input class="anchor-inp" type="number" id="anc-a-${n}" value="${slot.anchor_a||620}" min="0"></div>
+          <div class="anchor-field"><span class="anchor-lbl">B</span><input class="anchor-inp" type="number" id="anc-b-${n}" value="${slot.anchor_b||480}" min="0"></div>
+          <div class="anchor-field"><span class="anchor-lbl">C</span><input class="anchor-inp" type="number" id="anc-c-${n}" value="${slot.anchor_c||0}" min="0"></div>
+          <div class="anchor-field"><span class="anchor-lbl">D</span><input class="anchor-inp" type="number" id="anc-d-${n}" value="${slot.anchor_d||0}" min="0"></div>
+        </div>
+        <div class="vote-stats">
+          <div class="vote-row">Real votes: <strong>${realTotal}</strong></div>
+          <div class="vote-row">Display total: <strong>${dispTotal + realTotal}</strong></div>
+          ${vd ? `<div class="vote-row">Real split: <strong>A:${vd.realCounts?.A||0} B:${vd.realCounts?.B||0} C:${vd.realCounts?.C||0}</strong></div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateSlotScenario(n) {
+  const id = document.getElementById(`slot-sel-${n}`).value;
+  slotsData[n] = slotsData[n] || {};
+  slotsData[n].scenario_id = id || null;
+}
+
+function toggleAnchor(n) {
+  slotsData[n] = slotsData[n] || {};
+  slotsData[n].anchor_enabled = document.getElementById(`anchor-en-${n}`).checked;
+}
+
+async function saveDailySlots() {
+  const date = document.getElementById('daily-date').value;
+  for (const n of [1,2,3]) {
+    const sel = document.getElementById(`slot-sel-${n}`);
+    const payload = {
+      slot_date: date,
+      slot_number: n,
+      scenario_id: sel?.value || null,
+      anchor_a: parseInt(document.getElementById(`anc-a-${n}`)?.value)||0,
+      anchor_b: parseInt(document.getElementById(`anc-b-${n}`)?.value)||0,
+      anchor_c: parseInt(document.getElementById(`anc-c-${n}`)?.value)||0,
+      anchor_d: parseInt(document.getElementById(`anc-d-${n}`)?.value)||0,
+      anchor_enabled: document.getElementById(`anchor-en-${n}`)?.checked ?? true,
+    };
+    await API('set_slot', payload);
+  }
+  toast('All slots saved ✓','ok');
+  loadDailySlots();
+  loadSchedule();
+  loadRunway();
+}
+
+// ── SCHEDULE ──
+async function loadSchedule() {
+  const from = document.getElementById('sched-from').value;
+  const res = await API('get_slots', { from });
+  const slots = res.slots || [];
+  const el = document.getElementById('sched-list');
+  if (!slots.length) { el.innerHTML='<div class="empty-state">No scheduled slots from this date.</div>'; return; }
+  el.innerHTML = slots.map(s=>`
+    <div class="sched-list-item">
+      <span class="sched-date">${s.slot_date}</span>
+      <span class="sched-slot">Slot ${s.slot_number}</span>
+      <span class="sched-text">${s.scenario ? s.scenario.scenario?.substring(0,55)+'…' : '(empty)'}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--mu)">A:${s.realCounts?.A||0} B:${s.realCounts?.B||0}</span>
+      ${s.scenario_id?`<button class="btn btn-rd" style="padding:4px 9px;font-size:10px" onclick="removeSlot('${s.slot_date}',${s.slot_number})">Remove</button>`:''}
+    </div>`).join('');
+}
+
+async function removeSlot(date, num) {
+  await API('remove_slot', { slot_date: date, slot_number: num });
+  loadSchedule(); loadRunway();
+  toast('Removed','');
+}
+
+// ── SUBMISSIONS ──
+async function loadSubmissions() {
+  const res = await API('get_submissions');
+  const subs = res.submissions || [];
+  updateStats(null, null, subs.filter(s=>s.status==='pending').length, subs.length);
+  const el = document.getElementById('sub-list');
+  if (!subs.length) { el.innerHTML='<div class="empty-state">No user submissions yet.</div>'; return; }
+  el.innerHTML = subs.map(s=>{
+    const stClass = s.status==='pending'?'st-pend':s.status==='processed'?'st-proc':'st-rej';
+    const stLabel = s.status==='pending'?'Pending':s.status==='processed'?'Processed':s.status==='banked'?'Banked':'Rejected';
+    const date = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : '—';
+    const procBlock = s.processed_scenario ? `<div class="proc-card"><div class="proc-lbl">AI Processed (${s.processed_scenario.optionCount||2} opts)</div><div style="font-size:13px;color:var(--tx);margin-bottom:8px;line-height:1.6">${s.processed_scenario.scenario}</div>${(s.processed_scenario.options||[]).map(o=>`<div class="bk-opt"><em>${o.letter}: ${o.text}</em></div>`).join('')}<div style="margin-top:9px;display:flex;gap:7px"><button class="btn btn-gn" style="font-size:11px;padding:5px 11px" onclick="bankFromSub('${s.id}')">Bank This</button></div></div>` : '';
+    return `<div class="sub-item" id="sub-${s.id}">
+      <div class="sub-hdr">
+        <div style="display:flex;align-items:center;gap:7px"><span class="sub-st ${stClass}">${stLabel}</span><span class="sub-dt">${date}</span></div>
+        <div style="display:flex;gap:7px">
+          ${s.status==='pending'?`<button class="btn btn-bl" style="font-size:11px;padding:5px 10px" onclick="processSub('${s.id}')">Process with AI</button>`:''}
+          <button class="btn btn-rd" style="font-size:11px;padding:5px 10px" onclick="deleteSub('${s.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="sub-body">${s.situation}</div>
+      <div style="display:flex;gap:7px;margin-bottom:8px">
+        ${s.opt_a?`<span class="bk-opt"><em>A: ${s.opt_a}</em></span>`:''}
+        ${s.opt_b?`<span class="bk-opt"><em>B: ${s.opt_b}</em></span>`:''}
+      </div>
+      ${procBlock}
+    </div>`;
+  }).join('');
+}
+
+async function processSub(id) {
+  const res = await API('get_submissions');
+  const sub = res.submissions?.find(s=>s.id===id);
+  if (!sub) return;
+  const btn = document.getElementById('sub-'+id)?.querySelector('.btn-bl');
+  if (btn) { btn.disabled=true; btn.textContent='Processing…'; }
+  try {
+    const data = await GEN({ action:'process', submission:`${sub.situation}\n\nOption A: ${sub.opt_a||''}\nOption B: ${sub.opt_b||''}`, optionCount:subCount });
+    if (!data.error) {
+      await API('update_submission', { id, status: data.verdict==='APPROVED'?'processed':'rejected', processed_scenario: data });
+      toast(data.verdict==='APPROVED'?'Processed ✓':'Rejected by quality check','ok');
+      loadSubmissions();
+    }
+  } catch(e) { toast('Processing failed','err'); if(btn){btn.disabled=false;btn.textContent='Process with AI';} }
+}
+
+async function bankFromSub(subId) {
+  const res = await API('get_submissions');
+  const sub = res.submissions?.find(s=>s.id===subId);
+  if (!sub?.processed_scenario) return;
+  const s = sub.processed_scenario;
+  if (!s.id) s.id = Math.random().toString(36).substr(2,8);
+  s.source = 'user_submission';
+  await API('save_scenario', { scenario: s });
+  bank.unshift(s);
+  await API('update_submission', { id: subId, status: 'banked', processed_scenario: s });
+  updateStats(); loadSubmissions();
+  toast('Banked from submission ✓','ok');
+}
+
+async function deleteSub(id) {
+  if (!confirm('Delete?')) return;
+  await API('delete_submission', { id });
+  loadSubmissions();
+  toast('Deleted','');
+}
+
+// ── RUNWAY ──
+async function loadRunway() {
+  const res = await API('get_runway');
+  if (res.error) return;
+  const { total, unscheduled, runway, qpd } = res;
+  document.getElementById('rw-total').textContent = total||0;
+  document.getElementById('rw-unscheduled').textContent = unscheduled||0;
+  document.getElementById('rw-days').textContent = runway||0;
+  const pct = Math.min(runway*100/30, 100);
+  const fill = document.getElementById('rw-gauge');
+  fill.style.width = pct+'%';
+  fill.className = 'runway-fill ' + (runway>=7?'rw-gn':runway>=3?'rw-am':'rw-rd');
+  document.getElementById('rw-desc').textContent = runway>=7 ? `You have ${runway} days of content ready. Good runway.` : runway>=3 ? `You have ${runway} days. Consider generating more scenarios.` : `Critical: only ${runway} days left. Generate more scenarios now.`;
+  const pill = document.getElementById('runway-pill');
+  pill.textContent = `● ${runway}d runway`;
+  pill.className = 'runway-pill ' + (runway>=7?'runway-ok':runway>=3?'runway-warn':'runway-low');
+  updateStats(total, unscheduled);
+}
+
+async function autoSchedule(days) {
+  const res = await API('auto_schedule', { days });
+  toast(`Scheduled ${res.scheduled||0} scenarios ✓`,'ok');
+  loadRunway(); loadSchedule();
+}
+
+// ── SETTINGS ──
+async function loadSettings() {
+  const res = await API('get_settings');
+  const s = res.settings||{};
+  if (document.getElementById('set-qpd')) document.getElementById('set-qpd').value = s.questions_per_day||'3';
+  if (document.getElementById('set-threshold')) document.getElementById('set-threshold').value = s.vote_threshold||'20';
+  if (document.getElementById('set-anchor-a')) document.getElementById('set-anchor-a').value = s.default_anchor_a||'620';
+  if (document.getElementById('set-anchor-b')) document.getElementById('set-anchor-b').value = s.default_anchor_b||'480';
+}
+
+async function saveSettings() {
+  await API('save_settings', { settings: {
+    questions_per_day: document.getElementById('set-qpd').value,
+    vote_threshold: document.getElementById('set-threshold').value,
+    default_anchor_a: document.getElementById('set-anchor-a').value,
+    default_anchor_b: document.getElementById('set-anchor-b').value,
+  }});
+  toast('Settings saved ✓','ok');
+}
+
+// ── HELPERS ──
+function updateStats(total, unscheduled, pendingSubs, totalSubs) {
+  if (total !== undefined) document.getElementById('st-bank').textContent = total||bank.length;
+  else document.getElementById('st-bank').textContent = bank.length;
+  if (totalSubs !== undefined) {
+    document.getElementById('st-sub').textContent = totalSubs;
+    const subTab = document.getElementById('sub-tab');
+    subTab.innerHTML = 'Submissions' + (pendingSubs>0?`<span class="badge">${pendingSubs}</span>`:'');
+  }
+}
+
+function toast(msg,type) {
+  const old=document.querySelector('.toast'); if(old) old.remove();
+  const t=document.createElement('div'); t.className='toast '+(type||''); t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Zaryn — What would you actually do?</title>
+<meta name="description" content="One scenario. Millions of real answers. How well do you understand people?">
+<meta name="theme-color" content="#C9A84C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zaryn">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0D0C09;--s1:#141310;--s2:#1C1B17;--s3:#252320;
+  --b1:#252320;--b2:#302F2A;--b3:#3E3D36;
+  --tx:#F2EEE3;--mu:#887F6A;--mu2:#5A5448;
+  --am:#C9A84C;--am2:#C9A84C18;--am3:#C9A84C35;
+  --gn:#52B07A;--gn2:#52B07A18;--gn3:#52B07A35;
+  --rd:#C0524B;--rd2:#C0524B18;
+  --bl:#5B8FD4;--bl2:#5B8FD418;
+  --pu:#9B72CF;--pu2:#9B72CF18;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);font-weight:300;}
+body{min-height:100vh;min-height:-webkit-fill-available;display:flex;align-items:center;justify-content:center;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");opacity:.5;}
+.wrap{position:relative;z-index:1;width:100%;max-width:500px;padding:0 20px;}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;min-height:100vh;padding:env(safe-area-inset-top,24px) 0 env(safe-area-inset-bottom,24px);justify-content:center;}
+.screen.active{display:flex;}
+
+/* ── SPLASH ── */
+#splash{align-items:center;text-align:center;}
+.splash-logo{font-family:var(--serif);font-size:96px;font-weight:400;color:var(--am);letter-spacing:-4px;line-height:1;animation:logoIn 1.2s cubic-bezier(.16,1,.3,1) both;}
+.splash-tag{font-size:14px;color:var(--mu);letter-spacing:.06em;margin-top:14px;animation:fadeUp .8s .5s ease both;}
+.splash-dots{display:flex;gap:8px;margin-top:3rem;animation:fadeUp .6s 1s ease both;}
+.splash-dots span{width:5px;height:5px;border-radius:50%;background:var(--am3);animation:blink 1.4s ease infinite;}
+.splash-dots span:nth-child(2){animation-delay:.2s;}
+.splash-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes logoIn{from{opacity:0;transform:translateY(20px) scale(.88)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* ── ONBOARDING ── */
+#onboarding{text-align:center;}
+.ob-logo{font-family:var(--serif);font-size:32px;color:var(--am);margin-bottom:4px;}
+.ob-title{font-size:22px;font-weight:400;margin-bottom:8px;}
+.ob-sub{font-size:14px;color:var(--mu);line-height:1.7;margin-bottom:2rem;}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.cat-chip{padding:12px 14px;border:1px solid var(--b2);border-radius:8px;cursor:pointer;text-align:left;background:var(--s1);transition:all .2s;}
+.cat-chip:hover{border-color:var(--am);}
+.cat-chip.selected{border-color:var(--am);background:var(--am2);}
+.cat-chip-name{font-size:13px;font-weight:400;margin-bottom:2px;}
+.cat-chip-desc{font-size:11px;color:var(--mu);}
+.cat-chip.selected .cat-chip-desc{color:var(--am);opacity:.8;}
+.ob-note{font-size:12px;color:var(--mu);margin-bottom:1.5rem;}
+.ob-divider{border:none;border-top:1px solid var(--b1);margin:1.5rem 0;}
+.ob-niche-title{font-size:13px;color:var(--mu);margin-bottom:1rem;text-align:left;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.logo{font-family:var(--serif);font-size:28px;color:var(--am);letter-spacing:-1px;}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.meta-score{font-size:13px;color:var(--mu);}
+.meta-score strong{color:var(--tx);font-weight:400;}
+.meta-streak{font-size:12px;color:var(--am);}
+.prefs-btn{background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;font-family:var(--sans);text-decoration:underline;}
+
+/* ── DAILY VIEW ── */
+#daily-view{}
+.daily-header{margin-bottom:1.5rem;}
+.daily-date{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--mu);margin-bottom:4px;}
+.daily-title{font-size:18px;font-weight:400;}
+.daily-sub{font-size:13px;color:var(--mu);margin-top:4px;}
+.daily-progress{display:flex;gap:6px;margin-bottom:1.5rem;}
+.dp-dot{flex:1;height:3px;border-radius:2px;background:var(--b2);transition:background .3s;}
+.dp-dot.done{background:var(--am);}
+.dp-dot.current{background:var(--am3);}
+
+/* QUESTION CARDS */
+.q-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:1.5rem;}
+.q-card{background:var(--s1);border:1px solid var(--b2);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.q-card:hover:not(.done):not(.locked){border-color:var(--am);background:var(--am2);}
+.q-card.preferred{border-color:var(--am3);}
+.q-card.done{opacity:.7;cursor:default;}
+.q-card.locked{opacity:.5;cursor:default;}
+.q-card-tag{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--am);margin-bottom:8px;}
+.q-card-text{font-family:var(--serif);font-size:16px;font-style:italic;line-height:1.5;color:var(--tx);margin-bottom:12px;}
+.q-card-footer{display:flex;align-items:center;justify-content:space-between;}
+.q-card-status{font-size:12px;color:var(--mu);}
+.q-card-status.answered{color:var(--gn);}
+.q-card-btn{padding:7px 16px;border-radius:6px;border:1px solid var(--am3);background:none;color:var(--am);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .2s;}
+.q-card-btn:hover{background:var(--am2);}
+.q-card-done-icon{font-size:16px;}
+.all-done-msg{text-align:center;padding:2rem;background:var(--s1);border:1px solid var(--am3);border-radius:12px;}
+.all-done-msg .title{font-family:var(--serif);font-size:24px;font-style:italic;color:var(--am);margin-bottom:8px;}
+.all-done-msg .sub{font-size:14px;color:var(--mu);}
+
+/* ── SCENARIO SCREEN ── */
+#scenario-screen{}
+.cat-tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--am);border:1px solid var(--am3);padding:4px 12px;border-radius:2px;margin-bottom:1.5rem;}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--mu);margin-bottom:.75rem;}
+.scenario-body{font-family:var(--serif);font-size:clamp(22px,4.5vw,30px);line-height:1.5;color:var(--tx);margin-bottom:2.25rem;font-style:italic;}
+.opts{display:flex;flex-direction:column;gap:10px;margin-bottom:1.75rem;width:100%;}
+.opt{width:100%;text-align:left;padding:16px 18px;border-radius:6px;cursor:pointer;background:var(--s1);border:1px solid var(--b2);color:var(--tx);font-family:var(--sans);font-size:14px;font-weight:300;line-height:1.5;display:flex;align-items:flex-start;gap:14px;transition:all .2s;}
+.opt:hover::before{opacity:1;}
+.opt:before{content:'';position:absolute;inset:0;background:var(--am2);opacity:0;transition:opacity .2s;}
+.opt{position:relative;overflow:hidden;}
+.opt:hover{border-color:var(--am);}
+.opt-ltr{min-width:28px;height:28px;border-radius:4px;background:var(--s2);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mu);flex-shrink:0;transition:all .2s;position:relative;z-index:1;}
+.opt:hover .opt-ltr{background:var(--am);color:#0D0C09;border-color:var(--am);}
+.opt-body{position:relative;z-index:1;flex:1;}
+.timer-row{display:flex;align-items:center;gap:10px;}
+.timer-track{flex:1;height:1px;background:var(--b2);border-radius:1px;overflow:hidden;}
+.timer-fill{height:100%;background:var(--am);border-radius:1px;transition:width .9s linear;}
+.timer-lbl{font-size:12px;color:var(--mu);min-width:30px;text-align:right;}
+
+/* ── PREDICT ── */
+#predict .ph{font-family:var(--serif);font-size:36px;font-style:italic;margin-bottom:8px;}
+#predict .ps{font-size:14px;color:var(--mu);margin-bottom:.75rem;}
+#predict .pc{font-size:13px;color:var(--mu);margin-bottom:2rem;padding:10px 14px;background:var(--s1);border-left:2px solid var(--am);}
+#predict .pc em{font-style:normal;color:var(--tx);}
+.pred-opts{display:flex;flex-direction:column;gap:10px;}
+.pred-opt{width:100%;padding:16px;border-radius:6px;cursor:pointer;border:1px solid var(--b2);background:var(--s1);color:var(--tx);font-family:var(--sans);text-align:left;transition:all .2s;}
+.pred-opt:hover{border-color:var(--am);background:var(--am2);}
+.pred-icon{font-size:20px;margin-bottom:5px;display:block;}
+.pred-label{font-size:14px;font-weight:400;display:block;margin-bottom:2px;}
+.pred-sub{font-size:12px;color:var(--mu);}
+
+/* ── RESULTS ── */
+.res-head{margin-bottom:1.5rem;}
+.res-verdict{font-family:var(--serif);font-size:34px;font-style:italic;margin-bottom:6px;animation:fadeUp .5s ease both;}
+.res-tally{font-size:13px;color:var(--mu);animation:fadeUp .5s .1s ease both;}
+.res-threshold{font-size:13px;color:var(--am);animation:fadeUp .5s .1s ease both;font-family:var(--serif);font-style:italic;}
+
+/* SPLIT */
+.split-section{margin-bottom:1.5rem;animation:fadeUp .5s .2s ease both;}
+.split-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.split-ltr{font-family:var(--serif);font-size:14px;color:var(--am);min-width:16px;}
+.split-bar-wrap{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.split-bar-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.bar-a{background:var(--am);}
+.bar-b{background:var(--mu);opacity:.7;}
+.bar-c{background:var(--gn);opacity:.8;}
+.bar-d{background:#9B72CF;opacity:.7;}
+.split-pct{font-family:var(--serif);font-size:18px;min-width:46px;text-align:right;}
+.split-txt{font-size:12px;color:var(--mu);margin-bottom:10px;padding-left:26px;line-height:1.4;}
+
+/* INFO CARDS */
+.info-row{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;animation:fadeUp .5s .3s ease both;}
+.info-card{padding:12px 16px;background:var(--s1);border:1px solid var(--b1);border-radius:6px;font-size:13px;}
+.info-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:4px;}
+.info-val{font-size:15px;color:var(--tx);}
+.c-am{color:var(--am);}
+.c-gn{color:var(--gn);}
+.c-rd{color:var(--rd);}
+
+/* SCORE CARD */
+.score-card{background:var(--s1);border:1px solid var(--am3);border-radius:7px;padding:16px;margin-bottom:1.5rem;animation:fadeUp .5s .4s ease both;}
+.score-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:10px;}
+.score-lines{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.score-line{display:flex;justify-content:space-between;font-size:13px;}
+.score-line span:first-child{color:var(--mu);}
+.score-line span:last-child{color:var(--am);}
+.score-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;border-top:1px solid var(--b1);}
+.score-total-lbl{font-size:14px;}
+.score-num{font-family:var(--serif);font-size:40px;color:var(--am);line-height:1;}
+.streak-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);font-size:13px;color:var(--mu);}
+.streak-row strong{color:var(--tx);font-weight:400;}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:15px;background:var(--am);color:#0D0C09;border:none;border-radius:6px;font-family:var(--sans);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s;margin-bottom:10px;animation:fadeUp .5s .5s ease both;}
+.btn-primary:hover{opacity:.88;}
+.btn-ghost{width:100%;padding:13px;background:none;color:var(--mu);border:1px solid var(--b2);border-radius:6px;font-family:var(--sans);font-size:14px;cursor:pointer;transition:all .2s;animation:fadeUp .5s .6s ease both;}
+.btn-ghost:hover{color:var(--tx);border-color:var(--b3);background:var(--s1);}
+.next-note{text-align:center;font-size:12px;color:var(--mu);margin-top:10px;animation:fadeUp .5s .7s ease both;}
+.back-link{background:none;border:none;color:var(--mu);font-family:var(--sans);font-size:13px;cursor:pointer;text-decoration:underline;}
+
+/* SUBMIT */
+#submit-screen .sh{font-family:var(--serif);font-size:32px;font-style:italic;margin-bottom:8px;}
+#submit-screen .sd{font-size:14px;color:var(--mu);line-height:1.7;margin-bottom:2rem;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin-bottom:7px;}
+textarea,input[type=text]{width:100%;background:var(--s1);border:1px solid var(--b2);border-radius:6px;padding:12px 14px;color:var(--tx);font-family:var(--sans);font-size:14px;font-weight:300;outline:none;transition:border-color .2s;resize:none;}
+textarea:focus,input:focus{border-color:var(--am);}
+textarea::placeholder,input::placeholder{color:var(--mu2);}
+.sub-note{font-size:12px;color:var(--mu);line-height:1.65;margin-bottom:1.5rem;padding:12px;background:var(--s1);border-left:2px solid var(--b2);}
+
+/* SHARE */
+#share-screen{align-items:center;}
+.share-card{width:100%;background:var(--s1);border:1px solid var(--am3);border-radius:10px;padding:26px 22px;margin-bottom:1.5rem;text-align:center;}
+.share-logo{font-family:var(--serif);font-size:36px;color:var(--am);margin-bottom:4px;}
+.share-rule{width:28px;height:1px;background:var(--am3);margin:12px auto;}
+.share-snippet{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--tx);opacity:.72;margin-bottom:12px;line-height:1.5;}
+.share-choice-lbl{font-size:12px;color:var(--mu);margin-bottom:12px;}
+.share-choice-lbl strong{color:var(--tx);font-weight:400;}
+.share-score-num{font-family:var(--serif);font-size:52px;color:var(--am);line-height:1;}
+.share-score-sub{font-size:11px;color:var(--mu);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;}
+.share-streak{font-size:13px;color:var(--mu);margin-top:10px;}
+.share-foot{margin-top:16px;font-size:10px;color:var(--mu2);text-transform:uppercase;letter-spacing:.12em;}
+
+/* EMPTY / DONE */
+#empty-screen,#all-done-screen{text-align:center;align-items:center;}
+.empty-head{font-family:var(--serif);font-size:30px;font-style:italic;margin-bottom:10px;}
+.empty-sub{font-size:14px;color:var(--mu);line-height:1.7;}
+
+/* LOADING */
+.loading-screen{text-align:center;align-items:center;}
+.loading-screen .l-logo{font-family:var(--serif);font-size:48px;color:var(--am);margin-bottom:16px;}
+.loading-dots{display:flex;gap:7px;}
+.loading-dots span{width:5px;height:5px;border-radius:50%;background:var(--am3);animation:blink 1.4s ease infinite;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- SPLASH -->
+<div class="screen active" id="splash">
+  <div class="splash-logo">Zaryn</div>
+  <div class="splash-tag">What would you actually do?</div>
+  <div class="splash-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- LOADING -->
+<div class="screen loading-screen" id="loading">
+  <div class="l-logo">Zaryn</div>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="onboarding">
+  <div class="ob-logo">Zaryn</div>
+  <div style="height:1px;background:var(--am3);margin:12px 0 20px"></div>
+  <div class="ob-title">What dilemmas interest you?</div>
+  <div class="ob-sub">Choose the categories you want to see. Universal topics are selected by default — you can always change this later.</div>
+  <div class="cat-grid" id="universal-cats"></div>
+  <div class="ob-divider"></div>
+  <div class="ob-niche-title">Optional — turn on if relevant to you:</div>
+  <div class="cat-grid" id="niche-cats"></div>
+  <div class="ob-note">You can answer any question — even ones outside your selected categories.</div>
+  <button class="btn-primary" onclick="savePrefs()">Start Playing →</button>
+</div>
+
+<!-- DAILY VIEW -->
+<div class="screen" id="daily-view">
+  <div class="topbar">
+    <div class="logo">Zaryn</div>
+    <div class="meta">
+      <div class="meta-score">Score: <strong id="hdr-score">0</strong></div>
+      <div class="meta-streak" id="hdr-streak"></div>
+    </div>
+  </div>
+  <div class="daily-header">
+    <div class="daily-date" id="daily-date-lbl"></div>
+    <div class="daily-title" id="daily-title">Today's Dilemmas</div>
+    <div class="daily-sub" id="daily-sub"></div>
+  </div>
+  <div class="daily-progress" id="daily-progress"></div>
+  <div class="q-cards" id="q-cards"></div>
+  <div style="text-align:center;margin-top:8px">
+    <button class="prefs-btn" onclick="show('onboarding')">Change preferences</button>
+  </div>
+</div>
+
+<!-- SCENARIO -->
+<div class="screen" id="scenario-screen">
+  <div class="topbar">
+    <div class="logo">Zaryn</div>
+    <button class="back-link" onclick="show('daily-view')">← Back</button>
+  </div>
+  <div class="cat-tag" id="game-cat">Today's Dilemma</div>
+  <div class="eyebrow">What would you do?</div>
+  <div class="scenario-body" id="game-scenario"></div>
+  <div class="opts" id="game-opts"></div>
+  <div class="timer-row">
+    <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+    <div class="timer-lbl" id="timer-lbl">30s</div>
+  </div>
+</div>
+
+<!-- PREDICT -->
+<div class="screen" id="predict">
+  <div class="topbar"><div class="logo">Zaryn</div></div>
+  <div class="ph">One more thing.</div>
+  <div class="ps">Earn bonus points. Predict what most people chose.</div>
+  <div class="pc">You chose: <em id="pred-choice-lbl"></em></div>
+  <div class="pred-opts" id="pred-opts"></div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="results">
+  <div class="topbar"><div class="logo">Zaryn</div></div>
+  <div class="res-head">
+    <div class="res-verdict" id="res-verdict">The results are in.</div>
+    <div id="res-tally-wrap"></div>
+  </div>
+  <div class="split-section" id="split-section"></div>
+  <div class="info-row">
+    <div class="info-card"><div class="info-lbl">Your position</div><div class="info-val" id="res-position">—</div></div>
+    <div class="info-card"><div class="info-lbl">Prediction</div><div class="info-val" id="res-pred">—</div></div>
+  </div>
+  <div class="score-card">
+    <div class="score-lbl">Score Update</div>
+    <div class="score-lines">
+      <div class="score-line"><span>Answered today's dilemma</span><span>+15</span></div>
+      <div class="score-line"><span>Prediction bonus</span><span id="pts-pred">+0</span></div>
+      <div class="score-line"><span>Streak bonus</span><span id="pts-streak">+0</span></div>
+    </div>
+    <div class="score-total"><div class="score-total-lbl">Zaryn Score</div><div class="score-num" id="res-score">—</div></div>
+    <div class="streak-row">🔥 <strong id="res-streak">1</strong>&nbsp;day streak</div>
+  </div>
+  <button class="btn-primary" onclick="goShare()">Share my result</button>
+  <button class="btn-ghost" onclick="backToDaily()">← Back to today's questions</button>
+  <div class="next-note" id="next-note"></div>
+</div>
+
+<!-- SUBMIT -->
+<div class="screen" id="submit-screen">
+  <div class="topbar"><div class="logo">Zaryn</div><button class="back-link" onclick="show('daily-view')">← Back</button></div>
+  <div class="sh">Your dilemma.</div>
+  <div class="sd">Faced a real situation you genuinely didn't know what to do? Share it. If it passes review it becomes a future question for thousands of people.</div>
+  <div class="field"><label>What happened?</label><textarea id="sub-sit" rows="5" placeholder="Describe the situation in 2-4 sentences. No names or places needed…"></textarea></div>
+  <div class="field"><label>One possible response</label><input type="text" id="sub-a" placeholder="What's one thing someone might do?" maxlength="100"></div>
+  <div class="field"><label>The other response</label><input type="text" id="sub-b" placeholder="What's the alternative?" maxlength="100"></div>
+  <div class="sub-note">Your submission is anonymized by AI. All identifying details are removed.</div>
+  <button class="btn-primary" onclick="submitDilemma()">Submit</button>
+</div>
+
+<!-- THANKS -->
+<div class="screen" id="thanks" style="text-align:center;align-items:center;">
+  <div style="font-size:40px;margin-bottom:1rem">✦</div>
+  <div style="font-family:var(--serif);font-size:36px;font-style:italic;margin-bottom:10px">Submitted.</div>
+  <div style="font-size:14px;color:var(--mu);line-height:1.7">Your dilemma is in the review queue.<br>If it passes, thousands of people will face your question.</div>
+  <button class="btn-primary" style="margin-top:2rem" onclick="show('daily-view')">Back to today</button>
+</div>
+
+<!-- SHARE -->
+<div class="screen" id="share-screen">
+  <div class="topbar"><div class="logo">Zaryn</div><button class="back-link" onclick="show('results')">← Back</button></div>
+  <div class="share-card">
+    <div class="share-logo">Zaryn</div>
+    <div class="share-rule"></div>
+    <div class="share-snippet" id="sh-snippet"></div>
+    <div class="share-choice-lbl">I chose: <strong id="sh-choice"></strong></div>
+    <div class="share-score-num" id="sh-score"></div>
+    <div class="share-score-sub">Zaryn Score</div>
+    <div class="share-streak" id="sh-streak"></div>
+    <div class="share-foot">zaryn.app · one question · every human</div>
+  </div>
+  <button class="btn-primary" onclick="doShare()">Share this</button>
+  <button class="btn-ghost" onclick="show('submit-screen')">Submit your own dilemma →</button>
+</div>
+
+<!-- EMPTY -->
+<div class="screen" id="empty-screen">
+  <div class="logo" style="margin-bottom:2rem">Zaryn</div>
+  <div class="empty-head">No questions today.</div>
+  <div class="empty-sub">Come back tomorrow. A new set of dilemmas drops every 24 hours.</div>
+</div>
+
+<!-- ALL DONE -->
+<div class="screen" id="all-done-screen">
+  <div class="topbar"><div class="logo">Zaryn</div></div>
+  <div style="text-align:center;padding:1rem 0">
+    <div style="font-size:40px;margin-bottom:1rem">🎯</div>
+    <div style="font-family:var(--serif);font-size:32px;font-style:italic;color:var(--am);margin-bottom:8px">All done for today.</div>
+    <div style="font-size:14px;color:var(--mu);line-height:1.7;margin-bottom:2rem">You answered all of today's dilemmas.<br>Your streak is safe. See you tomorrow.</div>
+    <div class="score-card" style="text-align:left">
+      <div class="score-lbl">Today's Total</div>
+      <div class="score-total"><div class="score-total-lbl">Zaryn Score</div><div class="score-num" id="all-done-score">—</div></div>
+      <div class="streak-row">🔥 <strong id="all-done-streak">1</strong>&nbsp;day streak</div>
+    </div>
+    <button class="btn-primary" onclick="goShareAll()">Share my result</button>
+    <button class="btn-ghost" onclick="show('submit-screen')">Submit your own dilemma →</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const DB = (action, data={}) => fetch('/.netlify/functions/db', {
+  method:'POST', headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({action,...data})
+}).then(r=>r.json());
+
+// ── CATEGORIES ──
+const UNIVERSAL_CATS = [
+  {key:'regret', name:'Regret & Choices', desc:'Decisions you'd change'},
+  {key:'honesty', name:'Honesty vs Kindness', desc:'When truth hurts'},
+  {key:'fairness', name:'Fairness vs Loyalty', desc:'What you owe people'},
+  {key:'obligation', name:'Obligation vs Freedom', desc:'Duty vs your own life'},
+  {key:'sunk_cost', name:'Moving On', desc:'When to let go'},
+  {key:'avoidance', name:'Avoidance', desc:'When you dodge conflict'},
+];
+const NICHE_CATS = [
+  {key:'workplace', name:'Workplace', desc:'Career & colleagues'},
+  {key:'dating', name:'Dating & Romance', desc:'Relationships'},
+  {key:'parenting', name:'Parenting', desc:'Raising children'},
+  {key:'money', name:'Money', desc:'Financial decisions'},
+  {key:'health', name:'Health', desc:'Body & wellbeing'},
+];
+
+// ── STATE ──
+let todaySlots = [];
+let currentSlot = null;
+let currentChoice = null;
+let currentPrediction = null;
+let timerInterval = null, timerSecs = 30;
+let answeredSlots = {}; // slotNumber -> {letter, voteData}
+let playerId = getPlayerId();
+
+// ── STORAGE ──
+function getPlayerId() {
+  let id = localStorage.getItem('zaryn_player_id');
+  if (!id) { id='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,9); localStorage.setItem('zaryn_player_id',id); }
+  return id;
+}
+const getScore = () => parseInt(localStorage.getItem('zaryn_score')||'0');
+const setScore = v => localStorage.setItem('zaryn_score',v);
+const getStreak = () => { try{return JSON.parse(localStorage.getItem('zaryn_streak'))||{count:0,lastDate:''}}catch{return{count:0,lastDate:''}}; };
+const setStreak = v => localStorage.setItem('zaryn_streak',JSON.stringify(v));
+const getPrefs = () => { try{return JSON.parse(localStorage.getItem('zaryn_prefs'))||null}catch{return null}; };
+const setPrefs = v => localStorage.setItem('zaryn_prefs',JSON.stringify(v));
+const todayKey = () => new Date().toISOString().split('T')[0];
+
+// ── BOOT ──
+window.onload = () => setTimeout(boot, 1800);
+
+async function boot() {
+  // Check preferences
+  if (!getPrefs()) {
+    buildOnboarding();
+    show('onboarding');
+    return;
+  }
+  await loadToday();
+}
+
+// ── ONBOARDING ──
+function buildOnboarding() {
+  const prefs = getPrefs() || { universal: UNIVERSAL_CATS.map(c=>c.key), niche: [] };
+  const uEl = document.getElementById('universal-cats');
+  const nEl = document.getElementById('niche-cats');
+  uEl.innerHTML = UNIVERSAL_CATS.map(c=>`
+    <div class="cat-chip ${prefs.universal?.includes(c.key)?'selected':''}" onclick="toggleCat(this,'${c.key}','u')" data-key="${c.key}">
+      <div class="cat-chip-name">${c.name}</div>
+      <div class="cat-chip-desc">${c.desc}</div>
+    </div>`).join('');
+  nEl.innerHTML = NICHE_CATS.map(c=>`
+    <div class="cat-chip ${prefs.niche?.includes(c.key)?'selected':''}" onclick="toggleCat(this,'${c.key}','n')" data-key="${c.key}">
+      <div class="cat-chip-name">${c.name}</div>
+      <div class="cat-chip-desc">${c.desc}</div>
+    </div>`).join('');
+}
+
+function toggleCat(el) { el.classList.toggle('selected'); }
+
+function savePrefs() {
+  const uSelected = [...document.querySelectorAll('#universal-cats .cat-chip.selected')].map(el=>el.dataset.key);
+  const nSelected = [...document.querySelectorAll('#niche-cats .cat-chip.selected')].map(el=>el.dataset.key);
+  if (uSelected.length===0) { alert('Please select at least one category.'); return; }
+  setPrefs({ universal: uSelected, niche: nSelected, all: [...uSelected,...nSelected] });
+  loadToday();
+}
+
+// ── LOAD TODAY ──
+async function loadToday() {
+  show('loading');
+  const res = await DB('get_daily', { date: todayKey() });
+  todaySlots = (res.slots||[]).filter(s=>s.scenario);
+
+  if (!todaySlots.length) { show('empty-screen'); return; }
+
+  // Load answered state from localStorage
+  const savedAnswers = JSON.parse(localStorage.getItem('zaryn_answered_'+todayKey())||'{}');
+  answeredSlots = savedAnswers;
+
+  renderDailyView();
+  show('daily-view');
+}
+
+// ── DAILY VIEW ──
+function renderDailyView() {
+  const prefs = getPrefs() || { all: UNIVERSAL_CATS.map(c=>c.key) };
+  const score = getScore();
+  const streak = getStreak();
+  document.getElementById('hdr-score').textContent = score;
+  if (streak.count>1) document.getElementById('hdr-streak').textContent='🔥'+streak.count;
+
+  const now = new Date();
+  document.getElementById('daily-date-lbl').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const answered = Object.keys(answeredSlots).length;
+  const total = todaySlots.length;
+  document.getElementById('daily-sub').textContent = answered===total ? 'All done for today ✓' : `${answered} of ${total} answered`;
+
+  // Progress dots
+  const prog = document.getElementById('daily-progress');
+  prog.innerHTML = todaySlots.map((_,i)=>`<div class="dp-dot ${answeredSlots[i+1]?'done':''}"></div>`).join('');
+
+  // Cards
+  const cards = document.getElementById('q-cards');
+  if (answered===total) {
+    cards.innerHTML = `<div class="all-done-msg"><div class="title">All done! 🎯</div><div class="sub">You answered all of today's dilemmas. Your streak is safe.</div></div>`;
+    document.getElementById('all-done-score').textContent = getScore();
+    document.getElementById('all-done-streak').textContent = getStreak().count;
+    return;
+  }
+
+  cards.innerHTML = todaySlots.map((slot,i)=>{
+    const n = slot.slot_number;
+    const s = slot.scenario;
+    const isAnswered = !!answeredSlots[n];
+    const isPreferred = prefs.all?.some(k=>s.category_key===k||s.categoryKey===k) ?? true;
+    const snippet = s.scenario?.substring(0,100)+'…';
+    return `<div class="q-card ${isPreferred?'preferred':''} ${isAnswered?'done':''}" onclick="${isAnswered?'':'startScenario('+n+')'}">
+      <div class="q-card-tag">${s.category||'Dilemma'}</div>
+      <div class="q-card-text">${snippet}</div>
+      <div class="q-card-footer">
+        <div class="q-card-status ${isAnswered?'answered':''}">${isAnswered?'✓ Answered':'Tap to answer'}</div>
+        ${!isAnswered?`<button class="q-card-btn" onclick="event.stopPropagation();startScenario(${n})">Answer →</button>`:
+        `<div class="q-card-done-icon">✓</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── START SCENARIO ──
+function startScenario(slotNumber) {
+  currentSlot = todaySlots.find(s=>s.slot_number===slotNumber);
+  if (!currentSlot?.scenario) return;
+  const s = currentSlot.scenario;
+  document.getElementById('game-cat').textContent = s.category||"Today's Dilemma";
+  document.getElementById('game-scenario').textContent = s.scenario;
+  const opts = s.options||[];
+  document.getElementById('game-opts').innerHTML = opts.map(o=>`
+    <button class="opt" onclick="choose('${o.letter}','${escapeSingle(o.text)}')">
+      <div class="opt-ltr">${o.letter}</div>
+      <div class="opt-body">${o.text}</div>
+    </button>`).join('');
+  startTimer();
+  show('scenario-screen');
+}
+
+function escapeSingle(str){return str.replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
+
+function startTimer(){
+  timerSecs=30; tick();
+  timerInterval=setInterval(()=>{timerSecs--;tick();if(timerSecs<=0){clearInterval(timerInterval);const opts=currentSlot?.scenario?.options||[];if(opts.length)choose(opts[0].letter,opts[0].text);}},1000);
+}
+function tick(){
+  document.getElementById('timer-fill').style.width=(timerSecs/30*100)+'%';
+  document.getElementById('timer-lbl').textContent=timerSecs+'s';
+}
+
+function choose(letter, text) {
+  clearInterval(timerInterval);
+  currentChoice = {letter, text};
+  document.getElementById('pred-choice-lbl').textContent='"'+text+'"';
+  buildPredictOptions();
+  show('predict');
+}
+
+function buildPredictOptions() {
+  const opts = currentSlot?.scenario?.options||[];
+  const el = document.getElementById('pred-opts');
+  if (opts.length===2) {
+    el.innerHTML=`
+      <button class="pred-opt" onclick="predict('majority')"><span class="pred-icon">🌍</span><span class="pred-label">I'm with the majority</span><span class="pred-sub">Most people chose the same as me</span></button>
+      <button class="pred-opt" onclick="predict('minority')"><span class="pred-icon">⚡</span><span class="pred-label">I'm in the minority</span><span class="pred-sub">Most people chose the other option</span></button>`;
+  } else {
+    el.innerHTML=`<div style="font-size:13px;color:var(--mu);margin-bottom:12px">Which option do you think got the most votes?</div>`+
+      opts.map(o=>`<button class="pred-opt" onclick="predict('${o.letter}')"><span class="pred-label">${o.letter} — ${o.text.substring(0,50)}${o.text.length>50?'…':''}</span><span class="pred-sub">Most people chose this</span></button>`).join('');
+  }
+}
+
+async function predict(pred) {
+  currentPrediction = pred;
+  await showResults();
+}
+
+async function showResults() {
+  const slot = currentSlot;
+  const s = slot.scenario;
+  const opts = s.options||[];
+
+  // Record vote in Supabase
+  const voteRes = await DB('vote', {
+    scenario_id: s.id,
+    option_letter: currentChoice.letter,
+    player_id: playerId,
+    slot_date: todayKey()
+  });
+
+  const vd = voteRes.voteData || slot.voteData;
+  const display = vd?.display || {};
+  const total = vd?.total || 0;
+  const realTotal = vd?.realTotal || 0;
+  const threshold = 20;
+  const hasEnough = realTotal >= threshold;
+
+  // Calculate split
+  const letters = opts.map(o=>o.letter);
+  const myPct = total>0 ? Math.round((display[currentChoice.letter]||0)/total*100) : 50;
+  const maxLetter = letters.reduce((a,b)=>(display[a]||0)>(display[b]||0)?a:b, letters[0]);
+  const inMajority = currentChoice.letter === maxLetter;
+
+  // Prediction correct?
+  let predCorrect = false;
+  if (opts.length===2) predCorrect=(currentPrediction==='majority'&&inMajority)||(currentPrediction==='minority'&&!inMajority);
+  else predCorrect = currentPrediction === maxLetter;
+
+  // Streak
+  const streak = getStreak();
+  const today = todayKey();
+  let newStreak = 1;
+  if (streak.lastDate) {
+    const diff = Math.floor((new Date(today)-new Date(streak.lastDate))/86400000);
+    newStreak = diff===1?streak.count+1:1;
+  }
+  setStreak({count:newStreak, lastDate:today});
+
+  // Points
+  const basePts=15, predPts=predCorrect?10:0, strPts=Math.min(newStreak-1,5)*2;
+  const newScore = getScore()+basePts+predPts+strPts;
+  setScore(newScore);
+
+  // Save answered state
+  answeredSlots[slot.slot_number] = { letter:currentChoice.letter, voteData:vd };
+  localStorage.setItem('zaryn_answered_'+today, JSON.stringify(answeredSlots));
+
+  // Verdict
+  document.getElementById('res-verdict').textContent = inMajority?'You think like most people.':'You stand apart from the crowd.';
+
+  // Tally / threshold
+  const tallyWrap = document.getElementById('res-tally-wrap');
+  if (hasEnough) {
+    tallyWrap.innerHTML = `<div class="res-tally">${total.toLocaleString()} Zaryn players answered this</div>`;
+  } else {
+    tallyWrap.innerHTML = `<div class="res-threshold">Be among the first to answer — ${threshold-realTotal} more votes needed to reveal full results</div>`;
+  }
+
+  // Split bars
+  const colors = ['bar-a','bar-b','bar-c','bar-d'];
+  let splitHTML = opts.map((o,i)=>{
+    const pct = total>0&&hasEnough ? Math.round((display[o.letter]||0)/total*100) : 0;
+    return `<div class="split-row">
+      <div class="split-ltr">${o.letter}</div>
+      <div class="split-bar-wrap"><div class="split-bar-fill ${colors[i]}" id="bar-${i}" style="width:0%"></div></div>
+      <div class="split-pct">${hasEnough?pct+'%':'?'}</div>
+    </div>
+    <div class="split-txt">${o.text}</div>`;
+  }).join('');
+  document.getElementById('split-section').innerHTML = splitHTML;
+  if (hasEnough) setTimeout(()=>opts.forEach((_,i)=>{
+    const pct=total>0?Math.round((display[opts[i].letter]||0)/total*100):0;
+    const el=document.getElementById('bar-'+i); if(el) el.style.width=pct+'%';
+  }),300);
+
+  // Position
+  document.getElementById('res-position').innerHTML = inMajority
+    ?`<span class="c-am">You chose with the majority${hasEnough?' — '+myPct+'% agreed':''}</span>`
+    :`<span class="c-am">You're in the minority${hasEnough?' — only '+myPct+'% agreed':''}</span>`;
+
+  // Prediction
+  document.getElementById('res-pred').innerHTML = predCorrect
+    ?`<span class="c-gn">Correct prediction — you read the crowd ✓ +${predPts} pts</span>`
+    :`<span class="c-rd">Missed — the crowd surprised you</span>`;
+
+  document.getElementById('pts-pred').textContent='+'+predPts;
+  document.getElementById('pts-streak').textContent='+'+strPts;
+  document.getElementById('res-score').textContent=newScore;
+  document.getElementById('res-streak').textContent=newStreak;
+
+  const answered = Object.keys(answeredSlots).length;
+  const total_slots = todaySlots.length;
+  const remaining = total_slots - answered;
+  if (remaining>0) document.getElementById('next-note').textContent = `${remaining} more dilemma${remaining>1?'s':''} waiting for you today`;
+  else document.getElementById('next-note').textContent = `All done for today! Next questions in ${24-new Date().getHours()}h`;
+
+  localStorage.setItem('zaryn_last_snippet', s.scenario?.substring(0,85)+'…');
+  localStorage.setItem('zaryn_last_choice', currentChoice.letter+': '+currentChoice.text);
+
+  show('results');
+}
+
+function backToDaily() {
+  renderDailyView();
+  show('daily-view');
+  const answered=Object.keys(answeredSlots).length;
+  if (answered>=todaySlots.length) show('all-done-screen');
+}
+
+function goShare() {
+  const score=getScore(), streak=getStreak();
+  document.getElementById('sh-snippet').textContent=localStorage.getItem('zaryn_last_snippet')||'';
+  document.getElementById('sh-choice').textContent=localStorage.getItem('zaryn_last_choice')||'';
+  document.getElementById('sh-score').textContent=score;
+  document.getElementById('sh-streak').textContent='🔥 '+streak.count+'-day streak';
+  show('share-screen');
+}
+
+function goShareAll() {
+  goShare();
+}
+
+function doShare() {
+  const score=getScore(), streak=getStreak();
+  const ch=localStorage.getItem('zaryn_last_choice')||'';
+  const text=`Zaryn — Daily Human Dilemma\n\nI chose: "${ch}"\n\nMy Zaryn Score: ${score} 🔥 ${streak.count}-day streak\n\nWhat would you choose?\nzaryn.app`;
+  if(navigator.share){navigator.share({title:'My Zaryn Result',text}).catch(()=>copyText(text));}
+  else copyText(text);
+}
+
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.querySelector('#share-screen .btn-primary');
+    btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Share this',2500);
+  }).catch(()=>alert(text));
+}
+
+async function submitDilemma(){
+  const sit=document.getElementById('sub-sit').value.trim();
+  const a=document.getElementById('sub-a').value.trim();
+  const b=document.getElementById('sub-b').value.trim();
+  if(!sit||sit.length<30){alert('Please describe the situation in more detail.');return;}
+  if(!a||!b){alert('Please fill in both options.');return;}
+  const id='sub_'+Date.now();
+  await DB('save_submission',{id,situation:sit,opt_a:a,opt_b:b});
+  document.getElementById('sub-sit').value='';
+  document.getElementById('sub-a').value='';
+  document.getElementById('sub-b').value='';
+  show('thanks');
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>
