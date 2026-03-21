@@ -7,6 +7,7 @@
 <meta name="description" content="One scenario. Millions of real answers. How well do you understand people?">
 <meta name="theme-color" content="#C9A84C">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zaryn">
 <link rel="manifest" href="/manifest.json">
@@ -386,14 +387,21 @@ textarea::placeholder,input::placeholder{color:var(--mu2);}
 
 <script>
 // ── CONFIG ──
-const DB = (action, data={}) => fetch('/.netlify/functions/db', {
-  method:'POST', headers:{'Content-Type':'application/json'},
-  body: JSON.stringify({action,...data})
-}).then(r=>r.json());
+const DB = async (action, data={}) => {
+  try {
+    const r = await fetch('/.netlify/functions/db', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action,...data})
+    });
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { error: 'Server error '+r.status }; }
+  } catch(e) { return { error: e.message }; }
+};
 
 // ── CATEGORIES ──
 const UNIVERSAL_CATS = [
-  {key:'regret', name:'Regret & Choices', desc:'Decisions you'd change'},
+  {key:'regret', name:'Regret & Choices', desc:'Decisions you\'d change'},
   {key:'honesty', name:'Honesty vs Kindness', desc:'When truth hurts'},
   {key:'fairness', name:'Fairness vs Loyalty', desc:'What you owe people'},
   {key:'obligation', name:'Obligation vs Freedom', desc:'Duty vs your own life'},
