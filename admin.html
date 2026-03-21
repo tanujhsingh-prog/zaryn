@@ -450,15 +450,29 @@ select option{background:var(--s2);}
 <script>
 // ── CONFIG ──
 const PASS = 'ZARYN2025';
-const API = (action, data) => fetch('/.netlify/functions/db', {
-  method: 'POST', headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({action, ...data})
-}).then(r => r.json());
+const API = async (action, data) => {
+  try {
+    const r = await fetch('/.netlify/functions/db', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action, ...data})
+    });
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { error: `Server error ${r.status}: ${text.substring(0,200)}` }; }
+  } catch(e) { return { error: e.message }; }
+};
 
-const GEN = (data) => fetch('/.netlify/functions/generate', {
-  method: 'POST', headers: {'Content-Type':'application/json'},
-  body: JSON.stringify(data)
-}).then(r => r.json());
+const GEN = async (data) => {
+  try {
+    const r = await fetch('/.netlify/functions/generate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { error: `Server error ${r.status}: ${text.substring(0,200)}` }; }
+  } catch(e) { return { error: e.message }; }
+};
 
 let bank = [];
 let selectedCount = 2, subCount = 2;
@@ -538,24 +552,33 @@ async function generateSingle() {
   const btn = document.getElementById('gen-btn');
   btn.disabled = true;
   document.getElementById('gen-out').innerHTML = '<div class="loading"><span class="da">Generating</span></div>';
-  const data = await GEN({ action:'generate', category:document.getElementById('sel-cat').value, tone:document.getElementById('sel-tone').value, optionCount:selectedCount });
-  if (data.error) {
-    document.getElementById('gen-out').innerHTML = `<div class="loading" style="color:var(--rd)">Error: ${data.error}</div>`;
-  } else {
-    pendingScenario = data;
-    renderGenCard(data, 'gen-out', () => bankSingle(data));
+  try {
+    const data = await GEN({ action:'generate', category:document.getElementById('sel-cat').value, tone:document.getElementById('sel-tone').value, optionCount:selectedCount });
+    if (!data || data.error) {
+      document.getElementById('gen-out').innerHTML = `<div class="loading" style="color:var(--rd)">Error: ${data?.error || 'Unknown error — check environment variables in Netlify'}</div>`;
+    } else {
+      pendingScenario = data;
+      renderGenCard(data, 'gen-out');
+    }
+  } catch(e) {
+    document.getElementById('gen-out').innerHTML = `<div class="loading" style="color:var(--rd)">Error: ${e.message} — check that ANTHROPIC_API_KEY, SUPABASE_URL and SUPABASE_SERVICE_KEY are all set in Netlify environment variables</div>`;
   }
   btn.disabled = false;
 }
 
-function bankSingle(data) {
-  saveToBank(data);
+// bankSingle replaced by bankByCardId below
+const _cardStore = {};
+function bankByCardId(cardId) {
+  const s = _cardStore[cardId];
+  if (!s) return;
+  saveToBank(s);
+  delete _cardStore[cardId];
   document.getElementById('gen-out').innerHTML = '<div class="loading" style="color:var(--gn)">✓ Banked. Generate another or view in Bank tab.</div>';
   pendingScenario = null;
 }
 
 // ── RENDER GENERATED CARD ──
-function renderGenCard(s, containerId, onBank) {
+function renderGenCard(s, containerId) {
   const q = s.quality||{};
   const checks = [{key:'psychological',label:'Psychological'},{key:'realCost',label:'Real cost'},{key:'splitTarget',label:'Split target'},{key:'universal',label:'Universal'},{key:'safe',label:'Safe'}];
   const vc = s.score>=80?'vp':s.score>=60?'vw':'vf';
@@ -563,6 +586,7 @@ function renderGenCard(s, containerId, onBank) {
   const splitA = s.estimatedSplit?.A || 50;
   const el = document.getElementById(containerId);
   const cardId = 'card_'+Math.random().toString(36).substr(2,6);
+  _cardStore[cardId] = s;
   el.innerHTML += `<div class="sc-card" id="${cardId}">
     <span class="sc-tag">${s.category||'Scenario'}</span>
     <span class="sc-cnt">${s.optionCount||selectedCount} options</span>
@@ -579,7 +603,7 @@ function renderGenCard(s, containerId, onBank) {
       <div class="q-bottom"><span style="color:var(--mu)">${s.verdict}</span><span class="${vc}">${s.score}/100</span></div>
     </div>
     <div class="action-row">
-      <button class="btn btn-gn" onclick="(${onBank.toString()})()">Bank This</button>
+      <button class="btn btn-gn" onclick="bankByCardId('${cardId}')">Bank This</button>
       <button class="btn btn-rd" onclick="document.getElementById('${cardId}').remove()">Discard</button>
     </div>
   </div>`;
