@@ -378,9 +378,45 @@ textarea::placeholder,input::placeholder{color:var(--mu2);}
       <div class="score-total"><div class="score-total-lbl">Zaryn Score</div><div class="score-num" id="all-done-score">—</div></div>
       <div class="streak-row">🔥 <strong id="all-done-streak">1</strong>&nbsp;day streak</div>
     </div>
-    <button class="btn-primary" onclick="goShareAll()">Share my result</button>
-    <button class="btn-ghost" onclick="show('submit-screen')">Submit your own dilemma →</button>
+    <button class="btn-primary" onclick="startBonusMode()">Keep going — more dilemmas →</button>
+    <button class="btn-ghost" onclick="goShareAll()">Share my result</button>
+    <button class="btn-ghost" onclick="show('submit-screen')" style="margin-top:6px">Submit your own dilemma →</button>
   </div>
+</div>
+
+
+<!-- NOTIFICATION PERMISSION -->
+<div class="screen" id="notif-screen" style="text-align:center;align-items:center;">
+  <div style="font-size:48px;margin-bottom:1.5rem">🔔</div>
+  <div style="font-family:var(--serif);font-size:30px;font-style:italic;color:var(--am);margin-bottom:10px">Don't miss a single dilemma.</div>
+  <div style="font-size:14px;color:var(--mu);line-height:1.8;margin-bottom:1.5rem;max-width:340px">Every day a new psychological dilemma drops. The people who answer first shape the percentage everyone else sees. Get notified when it's live.</div>
+  <div style="background:var(--s1);border:1px solid var(--am3);border-radius:10px;padding:16px 20px;margin-bottom:1.5rem;width:100%">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mu);margin-bottom:10px">Remind me daily at</div>
+    <input type="time" id="notif-time" value="08:00" style="background:var(--bg);border:1px solid var(--b2);border-radius:6px;padding:10px 14px;color:var(--tx);font-family:var(--mono);font-size:16px;width:100%;outline:none;text-align:center">
+  </div>
+  <button class="btn-primary" onclick="requestNotifications()">Turn on daily reminders →</button>
+  <button class="btn-ghost" onclick="skipNotifications()">Skip for now</button>
+</div>
+
+<!-- BONUS STREAM -->
+<div class="screen" id="bonus-screen">
+  <div class="topbar">
+    <div class="logo">Zaryn</div>
+    <button class="back-link" onclick="show('all-done-screen')">← Back</button>
+  </div>
+  <div style="margin-bottom:1.5rem">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--am);margin-bottom:6px">Bonus Mode</div>
+    <div style="font-family:var(--serif);font-size:26px;font-style:italic;margin-bottom:6px">Keep going.</div>
+    <div style="font-size:13px;color:var(--mu);line-height:1.6">These are personal — just you and the question. No streak at stake. Pure curiosity.</div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--mu)">Answered today: <span id="bonus-count" style="color:var(--am)">0</span> bonus</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--mu)">Score: <span id="bonus-score" style="color:var(--tx)">0</span></div>
+  </div>
+  <div id="bonus-card-wrap"></div>
+  <div id="bonus-result-wrap" style="display:none"></div>
+  <button class="btn-primary" id="bonus-next-btn" onclick="loadNextBonus()" style="display:none">Next dilemma →</button>
+  <button class="btn-ghost" onclick="show('all-done-screen')" style="margin-top:8px">Done for today</button>
 </div>
 
 </div>
@@ -401,7 +437,7 @@ const DB = async (action, data={}) => {
 
 // ── CATEGORIES ──
 const UNIVERSAL_CATS = [
-  {key:'regret', name:'Regret & Choices', desc:'Decisions you\'d change'},
+  {key:'regret', name:'Regret & Choices', desc:'Decisions you would change'},
   {key:'honesty', name:'Honesty vs Kindness', desc:'When truth hurts'},
   {key:'fairness', name:'Fairness vs Loyalty', desc:'What you owe people'},
   {key:'obligation', name:'Obligation vs Freedom', desc:'Duty vs your own life'},
@@ -443,10 +479,17 @@ const todayKey = () => new Date().toISOString().split('T')[0];
 window.onload = () => setTimeout(boot, 1800);
 
 async function boot() {
+  initNotifications();
   // Check preferences
   if (!getPrefs()) {
     buildOnboarding();
     show('onboarding');
+    return;
+  }
+  // Check if notifications permission has been asked
+  const notifPerm = localStorage.getItem('zaryn_notif_perm');
+  if (!notifPerm && 'Notification' in window) {
+    show('notif-screen');
     return;
   }
   await loadToday();
@@ -476,7 +519,12 @@ function savePrefs() {
   const nSelected = [...document.querySelectorAll('#niche-cats .cat-chip.selected')].map(el=>el.dataset.key);
   if (uSelected.length===0) { alert('Please select at least one category.'); return; }
   setPrefs({ universal: uSelected, niche: nSelected, all: [...uSelected,...nSelected] });
-  loadToday();
+  const notifPerm = localStorage.getItem('zaryn_notif_perm');
+  if (!notifPerm && 'Notification' in window) {
+    show('notif-screen');
+  } else {
+    loadToday();
+  }
 }
 
 // ── LOAD TODAY ──
@@ -749,9 +797,265 @@ async function submitDilemma(){
   show('thanks');
 }
 
+
+// ── NOTIFICATION MESSAGES — psychologically compelling copy ──
+const NOTIF_MESSAGES = [
+  { title: 'Zaryn — Today\'s dilemma is live', body: '73% of people would lie in this situation. Would you? Tap to find out where you stand.' },
+  { title: 'Zaryn — Which side are you on?', body: 'Today\'s question has split people almost exactly 50/50. The psychology is fascinating.' },
+  { title: 'Zaryn — Your daily mirror', body: 'A new dilemma is waiting. Most people think they know what they\'d do. Most people are wrong.' },
+  { title: 'Zaryn — One question. No right answer.', body: 'The hardest dilemmas have no hero option. Today\'s is one of them.' },
+  { title: 'Zaryn — What would you actually do?', body: 'Not what you should do. Not what sounds good. What you\'d really do. Today\'s question cuts to the truth.' },
+  { title: 'Zaryn — Your streak is waiting', body: 'Don\'t break it now. One question. 60 seconds. Your streak stays alive.' },
+  { title: 'Zaryn — The results might surprise you', body: 'Yesterday 61% chose the option most people say they never would. Today\'s is even more revealing.' },
+  { title: 'Zaryn — Before you decide, think twice', body: 'Today\'s dilemma reveals the gap between who we think we are and who we actually are.' },
+  { title: 'Zaryn — The crowd has chosen', body: 'The votes are coming in. Which side are most people on? Answer now to find out.' },
+  { title: 'Zaryn — One of those days', body: 'Today\'s dilemma is one you\'ve faced in real life. Most people never admit what they actually did.' },
+];
+
+// ── NOTIFICATION SYSTEM ──
+async function requestNotifications() {
+  const time = document.getElementById('notif-time').value || '08:00';
+  if (!('Notification' in window)) {
+    localStorage.setItem('zaryn_notif_time', time);
+    finishOnboarding();
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  localStorage.setItem('zaryn_notif_perm', perm);
+  localStorage.setItem('zaryn_notif_time', time);
+  if (perm === 'granted') {
+    scheduleNotification(time);
+    // Show confirmation toast
+    showToast('Daily reminder set for ' + formatTime(time) + ' ✓');
+  }
+  finishOnboarding();
+}
+
+function skipNotifications() {
+  localStorage.setItem('zaryn_notif_perm', 'skipped');
+  finishOnboarding();
+}
+
+function finishOnboarding() {
+  loadToday();
+}
+
+function formatTime(t) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return `${hr}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+function scheduleNotification(timeStr) {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active?.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      time: timeStr,
+      messages: NOTIF_MESSAGES
+    });
+  });
+}
+
+function initNotifications() {
+  const perm = localStorage.getItem('zaryn_notif_perm');
+  const time = localStorage.getItem('zaryn_notif_time') || '08:00';
+  if (perm === 'granted') {
+    scheduleNotification(time);
+  }
+}
+
+function showToast(msg) {
+  const old = document.querySelector('.zaryn-toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.className = 'zaryn-toast';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#C9A84C;color:#0D0C09;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;font-family:var(--sans)';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── BONUS STREAM ──
+let bonusCount = 0;
+let bonusSessionScore = 0;
+let bonusAnsweredIds = new Set();
+let currentBonus = null;
+let bonusChoice = null;
+
+async function startBonusMode() {
+  bonusCount = parseInt(localStorage.getItem('zaryn_bonus_count_'+todayKey())||'0');
+  bonusSessionScore = 0;
+  document.getElementById('bonus-count').textContent = bonusCount;
+  document.getElementById('bonus-score').textContent = bonusSessionScore;
+  document.getElementById('bonus-result-wrap').style.display = 'none';
+  document.getElementById('bonus-next-btn').style.display = 'none';
+  show('bonus-screen');
+  await loadNextBonus();
+}
+
+async function loadNextBonus() {
+  const wrap = document.getElementById('bonus-card-wrap');
+  const resultWrap = document.getElementById('bonus-result-wrap');
+  const nextBtn = document.getElementById('bonus-next-btn');
+  resultWrap.style.display = 'none';
+  nextBtn.style.display = 'none';
+  wrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--mu);font-family:var(--mono);font-size:13px">Loading<span style="animation:blink 1.4s infinite">...</span></div>';
+
+  const prefs = getPrefs() || { all: [] };
+  const prefKeys = prefs.all || [];
+
+  // Get a random unplayed scenario from bank
+  const res = await DB('get_bank');
+  const allScenarios = res.scenarios || [];
+
+  // Filter: not answered today in bonus, prefer user categories
+  const today = todayKey();
+  const playedBonus = JSON.parse(localStorage.getItem('zaryn_bonus_played_'+today)||'[]');
+  const playedSet = new Set(playedBonus);
+
+  // Also exclude daily scenarios already answered
+  const dailyAnswered = JSON.parse(localStorage.getItem('zaryn_answered_'+today)||'{}');
+  const dailyIds = new Set(Object.values(dailyAnswered).map(a => a.scenarioId).filter(Boolean));
+
+  let pool = allScenarios.filter(s => !playedSet.has(s.id) && !dailyIds.has(s.id));
+
+  if (pool.length === 0) {
+    wrap.innerHTML = `<div style="text-align:center;padding:2rem">
+      <div style="font-size:32px;margin-bottom:12px">✦</div>
+      <div style="font-family:var(--serif);font-size:22px;font-style:italic;color:var(--am);margin-bottom:8px">You\'ve seen them all.</div>
+      <div style="font-size:14px;color:var(--mu)">You have answered every dilemma in the bank. Come back tomorrow for fresh ones.</div>
+    </div>`;
+    return;
+  }
+
+  // Prefer user category matches
+  const preferred = pool.filter(s => prefKeys.some(k => s.category_key===k||s.categoryKey===k));
+  const pickFrom = preferred.length > 0 ? preferred : pool;
+  currentBonus = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+
+  renderBonusCard(currentBonus, wrap);
+}
+
+function renderBonusCard(s, wrap) {
+  const opts = (s.options||[]).map(o => `
+    <button class="opt" onclick="chooseBonus('${o.letter}','${o.text.replace(/'/g,"&#39;")}')">
+      <div class="opt-ltr">${o.letter}</div>
+      <div class="opt-body">${o.text}</div>
+    </button>`).join('');
+
+  wrap.innerHTML = `
+    <div style="display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--am);border:1px solid var(--am3);padding:4px 12px;border-radius:2px;margin-bottom:1.25rem">${s.category||'Dilemma'}</div>
+    <div style="font-family:var(--serif);font-size:clamp(20px,4vw,26px);line-height:1.55;color:var(--tx);margin-bottom:1.75rem;font-style:italic">${s.scenario}</div>
+    <div class="opts">${opts}</div>
+    <div style="font-size:12px;color:var(--mu2);text-align:center;margin-top:8px">Bonus mode — personal only</div>`;
+}
+
+async function chooseBonus(letter, text) {
+  if (!currentBonus) return;
+  bonusChoice = { letter, text };
+
+  // Record vote
+  await DB('vote', {
+    scenario_id: currentBonus.id,
+    option_letter: letter,
+    player_id: playerId,
+    slot_date: todayKey()
+  });
+
+  // Mark as played
+  const today = todayKey();
+  const played = JSON.parse(localStorage.getItem('zaryn_bonus_played_'+today)||'[]');
+  played.push(currentBonus.id);
+  localStorage.setItem('zaryn_bonus_played_'+today, JSON.stringify(played));
+
+  bonusCount++;
+  bonusSessionScore += 10;
+  localStorage.setItem('zaryn_bonus_count_'+today, bonusCount);
+  document.getElementById('bonus-count').textContent = bonusCount;
+  document.getElementById('bonus-score').textContent = bonusSessionScore;
+
+  // Update total score
+  setScore(getScore() + 10);
+
+  // Show result
+  showBonusResult(currentBonus, letter, text);
+}
+
+async function showBonusResult(s, chosenLetter, chosenText) {
+  const resultWrap = document.getElementById('bonus-result-wrap');
+  const nextBtn = document.getElementById('bonus-next-btn');
+  const wrap = document.getElementById('bonus-card-wrap');
+
+  // Get real votes
+  const voteRes = await DB('vote', {
+    scenario_id: s.id,
+    option_letter: chosenLetter,
+    player_id: playerId + '_view',
+    slot_date: todayKey()
+  });
+  const vd = voteRes.voteData;
+  const display = vd?.display || {};
+  const total = vd?.total || 0;
+  const realTotal = vd?.realTotal || 0;
+  const hasEnough = realTotal >= 5;
+
+  const opts = s.options||[];
+  const maxLetter = opts.reduce((a,b)=>(display[a.letter]||0)>(display[b.letter]||0)?a:b, opts[0])?.letter;
+  const inMaj = chosenLetter === maxLetter;
+
+  const colors = ['#C9A84C','#887F6A','#52B07A','#9B72CF'];
+  const bars = opts.map((o,i) => {
+    const pct = total>0&&hasEnough ? Math.round((display[o.letter]||0)/total*100) : 0;
+    const chosen = o.letter === chosenLetter;
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span style="font-family:var(--mono);font-size:11px;color:${colors[i]};min-width:14px">${o.letter}</span>
+        <div style="flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
+          <div style="height:100%;background:${colors[i]};border-radius:2px;width:${hasEnough?pct:0}%;transition:width 1s ease"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:12px;min-width:36px;text-align:right">${hasEnough?pct+'%':'?'}</span>
+        ${chosen?'<span style="font-size:11px;color:var(--am)">← you</span>':''}
+      </div>
+      <div style="font-size:12px;color:var(--mu);padding-left:22px">${o.text}</div>
+    </div>`;
+  }).join('');
+
+  resultWrap.innerHTML = `
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px;margin-bottom:12px;animation:fadeIn .4s ease">
+      <div style="font-family:var(--serif);font-size:20px;font-style:italic;margin-bottom:12px;color:${inMaj?'var(--am)':'var(--tx)'}">${inMaj?'You think like most.':'You stand apart.'}</div>
+      ${bars}
+      ${hasEnough?`<div style="font-size:11px;color:var(--mu);margin-top:10px;text-align:right">${total.toLocaleString()} players answered</div>`:'<div style="font-size:11px;color:var(--am);margin-top:10px">Not enough votes yet to show %</div>'}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);font-size:12px;color:var(--am)">+10 bonus points</div>
+    </div>`;
+
+  resultWrap.style.display = 'block';
+  nextBtn.style.display = 'block';
+  wrap.innerHTML = '';
+
+  // Animate bars after render
+  setTimeout(() => {
+    resultWrap.querySelectorAll('div[style*="transition"]').forEach((el, i) => {
+      const pct = total>0&&hasEnough ? Math.round((display[opts[i]?.letter]||0)/total*100) : 0;
+      el.style.width = pct + '%';
+    });
+  }, 100);
+}
+
+
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+</script>
+
+<script>
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW failed:', e));
+  });
 }
 </script>
 </body>
