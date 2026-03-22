@@ -497,19 +497,31 @@ async function boot() {
 
 // ── ONBOARDING ──
 function buildOnboarding() {
-  const prefs = getPrefs() || { universal: UNIVERSAL_CATS.map(c=>c.key), niche: [] };
-  const uEl = document.getElementById('universal-cats');
-  const nEl = document.getElementById('niche-cats');
-  uEl.innerHTML = UNIVERSAL_CATS.map(c=>`
-    <div class="cat-chip ${prefs.universal?.includes(c.key)?'selected':''}" onclick="toggleCat(this,'${c.key}','u')" data-key="${c.key}">
-      <div class="cat-chip-name">${c.name}</div>
-      <div class="cat-chip-desc">${c.desc}</div>
-    </div>`).join('');
-  nEl.innerHTML = NICHE_CATS.map(c=>`
-    <div class="cat-chip ${prefs.niche?.includes(c.key)?'selected':''}" onclick="toggleCat(this,'${c.key}','n')" data-key="${c.key}">
-      <div class="cat-chip-name">${c.name}</div>
-      <div class="cat-chip-desc">${c.desc}</div>
-    </div>`).join('');
+  try {
+    const prefs = getPrefs() || { universal: UNIVERSAL_CATS.map(c=>c.key), niche: [] };
+    const uEl = document.getElementById('universal-cats');
+    const nEl = document.getElementById('niche-cats');
+    if (!uEl || !nEl) { console.error('Onboarding elements not found'); return; }
+    uEl.innerHTML = '';
+    nEl.innerHTML = '';
+    UNIVERSAL_CATS.forEach(function(c) {
+      const div = document.createElement('div');
+      div.className = 'cat-chip' + ((prefs.universal || []).includes(c.key) ? ' selected' : '');
+      div.setAttribute('data-key', c.key);
+      div.onclick = function() { this.classList.toggle('selected'); };
+      div.innerHTML = '<div class="cat-chip-name">' + c.name + '</div><div class="cat-chip-desc">' + c.desc + '</div>';
+      uEl.appendChild(div);
+    });
+    NICHE_CATS.forEach(function(c) {
+      const div = document.createElement('div');
+      div.className = 'cat-chip' + ((prefs.niche || []).includes(c.key) ? ' selected' : '');
+      div.setAttribute('data-key', c.key);
+      div.onclick = function() { this.classList.toggle('selected'); };
+      div.innerHTML = '<div class="cat-chip-name">' + c.name + '</div><div class="cat-chip-desc">' + c.desc + '</div>';
+      nEl.appendChild(div);
+    });
+    console.log('Onboarding built: ' + uEl.children.length + ' universal, ' + nEl.children.length + ' niche cats');
+  } catch(e) { console.error('buildOnboarding error:', e); }
 }
 
 function toggleCat(el) { el.classList.toggle('selected'); }
