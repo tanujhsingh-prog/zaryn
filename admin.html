@@ -478,6 +478,7 @@ let bank = [];
 let selectedCount = 2, subCount = 2;
 let pendingScenario = null;
 let slotsData = {};
+let scheduledIds = new Set();
 
 // ── CATEGORY MAP ──
 const CATS = {
@@ -760,6 +761,9 @@ async function loadDailySlots() {
   const date = document.getElementById('daily-date').value;
   const grid = document.getElementById('slots-grid');
   grid.innerHTML = '<div class="loading"><span class="da">Loading</span></div>';
+  // Fetch all scheduled IDs so we can mark/hide them in dropdowns
+  const schedRes = await API('get_slots', { from: new Date().toISOString().split('T')[0] });
+  scheduledIds = new Set((schedRes.slots||[]).filter(s=>s.scenario_id).map(s=>s.scenario_id));
   const res = await API('get_daily', { date });
   const slots = res.slots || [];
   // Ensure we have 3 slot objects
@@ -771,7 +775,16 @@ async function loadDailySlots() {
     slotsData[n] = { ...slot };
     const scenario = slot.scenario;
     const vd = slot.voteData;
-    const scenarioOpts = `<option value="">— none —</option>` + bank.map(s=>`<option value="${s.id}" ${s.id===slot.scenario_id?'selected':''}>${s.category||'—'}: ${s.scenario?.substring(0,45)}…</option>`).join('');
+    // Get all scheduled IDs across all slots for this date (exclude already assigned elsewhere)
+    const thisSlotId = slot.scenario_id || '';
+    const otherSlotIds = new Set([1,2,3].map(x=>slotsData[x]?.scenario_id).filter(id=>id && id!==thisSlotId));
+    const scenarioOpts = `<option value="">— none —</option>` + bank
+      .filter(s => s.id === thisSlotId || !otherSlotIds.has(s.id))
+      .map(s=>{
+        const isScheduled = s.id !== thisSlotId && scheduledIds.has(s.id);
+        const label = isScheduled ? `[Scheduled] ${s.category||'—'}: ${s.scenario?.substring(0,35)}…` : `${s.category||'—'}: ${s.scenario?.substring(0,45)}…`;
+        return `<option value="${s.id}" ${s.id===slot.scenario_id?'selected':''} ${isScheduled?'style="color:#666"':''}>${label}</option>`;
+      }).join('');
     const realTotal = vd?.realTotal || 0;
     const dispTotal = vd?.total || (slot.anchor_enabled?(slot.anchor_a||0)+(slot.anchor_b||0):0);
     return `<div class="slot-card ${scenario?'has-scenario':''}" id="slot-${n}">
