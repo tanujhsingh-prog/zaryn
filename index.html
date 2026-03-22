@@ -800,16 +800,16 @@ async function submitDilemma(){
 
 // ── NOTIFICATION MESSAGES — psychologically compelling copy ──
 const NOTIF_MESSAGES = [
-  { title: 'Zaryn — Today\'s dilemma is live', body: '73% of people would lie in this situation. Would you? Tap to find out where you stand.' },
-  { title: 'Zaryn — Which side are you on?', body: 'Today\'s question has split people almost exactly 50/50. The psychology is fascinating.' },
-  { title: 'Zaryn — Your daily mirror', body: 'A new dilemma is waiting. Most people think they know what they\'d do. Most people are wrong.' },
-  { title: 'Zaryn — One question. No right answer.', body: 'The hardest dilemmas have no hero option. Today\'s is one of them.' },
-  { title: 'Zaryn — What would you actually do?', body: 'Not what you should do. Not what sounds good. What you\'d really do. Today\'s question cuts to the truth.' },
-  { title: 'Zaryn — Your streak is waiting', body: 'Don\'t break it now. One question. 60 seconds. Your streak stays alive.' },
-  { title: 'Zaryn — The results might surprise you', body: 'Yesterday 61% chose the option most people say they never would. Today\'s is even more revealing.' },
-  { title: 'Zaryn — Before you decide, think twice', body: 'Today\'s dilemma reveals the gap between who we think we are and who we actually are.' },
-  { title: 'Zaryn — The crowd has chosen', body: 'The votes are coming in. Which side are most people on? Answer now to find out.' },
-  { title: 'Zaryn — One of those days', body: 'Today\'s dilemma is one you\'ve faced in real life. Most people never admit what they actually did.' },
+  { title: "Zaryn — Today's dilemma is live", body: "73% of people would lie in this situation. Would you? Tap to find out where you stand." },
+  { title: "Zaryn — Which side are you on?", body: "Today's question has split people almost exactly 50/50. The psychology is fascinating." },
+  { title: "Zaryn — Your daily mirror", body: "A new dilemma is waiting. Most people think they know what they'd do. Most people are wrong." },
+  { title: "Zaryn — One question. No right answer.", body: "The hardest dilemmas have no hero option. Today's is one of them." },
+  { title: "Zaryn — What would you actually do?", body: "Not what you should do. Not what sounds good. What you'd really do. Today's question cuts to the truth." },
+  { title: "Zaryn — Your streak is waiting", body: "Don't break it now. One question. 60 seconds. Your streak stays alive." },
+  { title: "Zaryn — The results might surprise you", body: "Yesterday 61% chose the option most people say they never would. Today's is even more revealing." },
+  { title: "Zaryn — Before you decide, think twice", body: "Today's dilemma reveals the gap between who we think we are and who we actually are." },
+  { title: "Zaryn — The crowd has chosen", body: "The votes are coming in. Which side are most people on? Answer now to find out." },
+  { title: "Zaryn — One of those days", body: "Today's dilemma is one you've faced in real life. Most people never admit what they actually did." },
 ];
 
 // ── NOTIFICATION SYSTEM ──
@@ -924,7 +924,7 @@ async function loadNextBonus() {
   if (pool.length === 0) {
     wrap.innerHTML = `<div style="text-align:center;padding:2rem">
       <div style="font-size:32px;margin-bottom:12px">✦</div>
-      <div style="font-family:var(--serif);font-size:22px;font-style:italic;color:var(--am);margin-bottom:8px">You\'ve seen them all.</div>
+      <div style="font-family:var(--serif);font-size:22px;font-style:italic;color:var(--am);margin-bottom:8px">You've seen them all.</div>
       <div style="font-size:14px;color:var(--mu)">You have answered every dilemma in the bank. Come back tomorrow for fresh ones.</div>
     </div>`;
     return;
